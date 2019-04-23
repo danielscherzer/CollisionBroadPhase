@@ -10,9 +10,30 @@ namespace Example
 	/// </summary>
 	internal class View
 	{
-		public View()
+		public View(Model model)
 		{
 			GL.ClearColor(Color.Black);
+			var asteroidPoints = CreateAsteroidPoints();
+			count = asteroidPoints.Count;
+			var array = asteroidPoints.ToArray(); //create an array (data is guarantied to be consecutive in memory
+			int byteSize = Vector2.SizeInBytes * array.Length; // calculate size in bytes of circle points
+
+			vertexArray = GL.GenVertexArray(); // create a vertex array object for interpreting our buffer data (circle points)
+			GL.BindVertexArray(vertexArray); // activate vertex array; from now on state is stored;
+
+			//for version 4.5 and or arb_direct_state_access
+			//GL.CreateBuffers(1, out uint circleBuffer); // create a buffer on the graphics card
+			//GL.NamedBufferStorage(circleBuffer, byteSize, array, 0); // copy circle points into buffer CPU -> GPU
+
+			var circleBuffer = GL.GenBuffer();
+			GL.BindBuffer(BufferTarget.ArrayBuffer, circleBuffer); // activate buffer
+			GL.BufferData(BufferTarget.ArrayBuffer, byteSize, array, BufferUsageHint.StaticDraw);
+
+			GL.EnableVertexAttribArray(0); // activate this vertex attribute for the active vertex array
+			GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 0, 0); // specify what our buffer contains
+			GL.BindVertexArray(0); // deactivate vertex array; state storing is stopped;
+			GL.BindBuffer(BufferTarget.ArrayBuffer, 0); // deactivate buffer; just to be on the cautious side;
+			this.model = model ?? throw new ArgumentNullException(nameof(model));
 		}
 
 		/// <summary>
@@ -23,17 +44,33 @@ namespace Example
 			GL.Viewport(0, 0, width, height); // tell OpenGL to use the whole window for drawing
 		}
 
-		internal void Draw(IEnumerable<GameObject> enumerable)
+		internal void Draw()
 		{
+			var gameObjects = model.GetGameObjects();
 			GL.Clear(ClearBufferMask.ColorBufferBit);
 			GL.Color3(Color.Gray);
-			foreach (var asteroid in enumerable)
+			GL.BindVertexArray(vertexArray); // activate vertex array
+			foreach (var asteroid in gameObjects)
 			{
 				DrawAsteroid(asteroid.Center, asteroid.Radius);
 			}
+			GL.Color3(Color.White);
+			foreach (var asteroid in gameObjects)
+			{
+				DrawAsteroid(asteroid.Center, asteroid.Radius, PrimitiveType.LineLoop);
+			}
+			GL.Color3(Color.Red);
+			foreach (var (asteroid1, asteroid2) in model.CollGridDebug)
+			{
+				DrawAsteroid(asteroid1.Center, asteroid1.Radius, PrimitiveType.LineLoop);
+				DrawAsteroid(asteroid2.Center, asteroid2.Radius, PrimitiveType.LineLoop);
+			}
+			GL.BindVertexArray(0); // deactivate vertex array
 		}
 
-		private static readonly List<Vector2> asteroidPoints = CreateAsteroidPoints();
+		private readonly int vertexArray;
+		private readonly int count;
+		private readonly Model model;
 
 		/// <summary>
 		/// Creates points along a circle, but for each point the radius of the circle is varied by a random variable.
@@ -59,16 +96,13 @@ namespace Example
 			return points;
 		}
 
-		private static void DrawAsteroid(Vector2 center, float radius)
+		private void DrawAsteroid(Vector2 center, float radius, PrimitiveType primitiveType = PrimitiveType.TriangleFan)
 		{
-			GL.Begin(PrimitiveType.TriangleFan);
-			GL.Vertex2(center);
-			foreach (var point in asteroidPoints)
-			{
-				GL.Vertex2(center + radius * point);
-			}
-			GL.Vertex2(center + radius * asteroidPoints[0]); //close border loop
-			GL.End();
+			GL.PushMatrix();
+			GL.Translate(center.X, center.Y, 0f);
+			GL.Scale(radius, radius, radius);
+			GL.DrawArrays(primitiveType, 0, count); // draw with vertex array data
+			GL.PopMatrix();
 		}
 
 		private void DrawQuad(Vector2 center, float radius)

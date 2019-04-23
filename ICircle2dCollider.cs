@@ -1,6 +1,6 @@
 ﻿namespace Example
 {
-	internal interface ICircle2dCollider
+	public interface ICircle2dCollider
 	{
 		float CenterX { get; }
 		float CenterY { get; }

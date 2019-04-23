@@ -13,6 +13,7 @@ namespace Example
 		public UiPropertyGrid(RenderWindow window, Vector2f position, object obj)
 		{
 			window.MouseButtonReleased += Window_MouseButtonReleased;
+			window.KeyReleased += Window_KeyReleased;
 			this.window = window ?? throw new ArgumentNullException(nameof(window));
 			border = 5f;
 			background = new RectangleShape
@@ -97,6 +98,10 @@ namespace Example
 			var right = Math.Max(a.Left + a.Width, b.Left + b.Width);
 			var bottom = Math.Max(a.Top + a.Height, b.Top + b.Height);
 			return new FloatRect(left, top, right - left, bottom - top);
+		}
+
+		private void Window_KeyReleased(object sender, KeyEventArgs e)
+		{
 		}
 
 		private void Window_MouseButtonReleased(object sender, MouseButtonEventArgs e)

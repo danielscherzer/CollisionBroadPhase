@@ -6,59 +6,72 @@ namespace Example
 	/// <summary>
 	/// Multi resolution collision grid 
 	/// The idea is to have a stack of collision grids with 2^level cells.
-	/// Each cell has a list of <seealso cref="ICircle2dCollider"/>, whose center are located above it.
-	/// <seealso cref="ICircle2dCollider"/> may overlap to neighboring cells. 
-	/// So <seealso cref="ICircle2dCollider"/> are inserted in the highest level, were the cell size is bigger then the radius,
+	/// Each cell has a list of <seealso cref="TCollider"/>, whose center are located above it.
+	/// <seealso cref="TCollider"/> may overlap to neighboring cells. 
+	/// So <seealso cref="TCollider"/> are inserted in the highest level, were the cell size is bigger then the radius,
 	/// so only direct neighbors need to be considered.
 	/// Idea from Game Gems 2: Multi-Resolution Maps for Interaction Detection by Jan Svarovsky
 	/// </summary>
-	class CollisionMultiGrid
+	class CollisionMultiGrid<TCollider> where TCollider : class
 	{
-		public CollisionMultiGrid(int gridLevels, float minX, float minY, float size)
+		public CollisionMultiGrid(int minLevel, int maxLevel, float minX, float minY, float size)
 		{
 			//create each grid level
-			int cellCount = 1;
-			var cellSize = size;
-			for (int level = 0; level < gridLevels; ++level, cellCount *= 2)
+			var cellCount = (int)MathF.Pow(2f, minLevel);
+			for (int level = minLevel; level <= maxLevel; ++level, cellCount *= 2)
 			{
-				var grid = new List<ICircle2dCollider>[cellCount, cellCount];
+				var grid = new List<TCollider>[cellCount, cellCount];
 				for (int y = 0; y < cellCount; ++y)
 				{
 					for (int x = 0; x < cellCount; ++x)
 					{
-						grid[x, y] = new List<ICircle2dCollider>();
+						grid[x, y] = new List<TCollider>();
 					}
 				}
+				var cellSize = 2f / MathF.Pow(2, level);
 				multiGrid.Add((cellSize, grid));
-				cellSize /= 2f;
 			}
 
-			GridLevels = gridLevels;
+			MinLevel = minLevel;
+			MaxLevel = maxLevel;
 			MinX = minX;
 			MinY = minY;
 			Size = size;
 		}
 
+		public int MinLevel { get; }
+		public int MaxLevel { get; }
+		public float MinX { get; }
+		public float MinY { get; }
+		public float Size { get; }
+
 		public void Add(ICircle2dCollider collider)
 		{
-			// find highest multiGrid level with cell size >= radius
-			for (int level = multiGrid.Count - 1; level >= 0; --level)
+			void AddToGridLevel(List<TCollider>[,] grid)
 			{
-				var (cellSize, grid) = multiGrid[level];
+				var unitX = (collider.CenterX - MinX) / Size;
+				var unitY = (collider.CenterY - MinY) / Size;
+				var columns = grid.GetLength(0);
+				var rows = grid.GetLength(1);
+				//calculate grid column and row
+				var column = Math.Clamp((int)(unitX * columns), 0, columns - 1);
+				var row = Math.Clamp((int)(unitY * rows), 0, rows - 1);
+				grid[column, row].Add(collider as TCollider);
+			}
+
+			// find highest multiGrid level with cell size >= object size
+			for (int level = MaxLevel; level > MinLevel; --level)
+			{
+				var (cellSize, grid) = GetLevel(level);
 				//if small enough -> insert into this level
-				if (collider.Radius <= cellSize)
+				if (collider.Radius * 2f <= cellSize)
 				{
-					var unitX = (collider.CenterX - MinX) / Size;
-					var unitY = (collider.CenterY - MinY) / Size;
-					var columns = grid.GetLength(0);
-					var rows = grid.GetLength(1);
-					//calculate grid column and row
-					var column = Math.Clamp((int)(unitX * columns), 0, columns - 1);
-					var row    = Math.Clamp((int)(unitY *    rows), 0,    rows - 1);
-					grid[column, row].Add(collider);
-					break;
+					AddToGridLevel(grid);
+					return;
 				}
 			}
+			//too big for smaller levels -> add to biggest 
+			AddToGridLevel(GetLevel(MinLevel).grid);
 		}
 
 		public void Clear()
@@ -72,12 +85,12 @@ namespace Example
 			}
 		}
 
-		public void FindCollision(Action<ICircle2dCollider, ICircle2dCollider> collisionHandler)
+		public void FindCollision(Action<TCollider, TCollider> collisionHandler)
 		{
 			// from smallest objects to largest objects
-			for (int level = multiGrid.Count - 1; level >= 0; --level)
+			for (int level = MaxLevel; level >= MinLevel; --level)
 			{
-				var (_, grid) = multiGrid[level];
+				var grid = GetGridLevel(level);
 				for (int y = 0; y < grid.GetLength(1); ++y)
 				{
 					for (int x = 0; x < grid.GetLength(0); ++x)
@@ -88,15 +101,18 @@ namespace Example
 			}
 		}
 
-		public IReadOnlyList<ICircle2dCollider>[,] GetGridLevel(int level) => multiGrid[level].Item2;
+		public IReadOnlyList<TCollider>[,] GetGridLevel(int level) => multiGrid[level - MinLevel].Item2;
 
-		private void CheckCell(int level, int x, int y, Action<ICircle2dCollider, ICircle2dCollider> collisionHandler)
+		private List<(float, List<TCollider>[,])> multiGrid = new List<(float, List<TCollider>[,])>();
+
+		private (float cellSize, List<TCollider>[,] grid) GetLevel(int level) => multiGrid[level - MinLevel];
+
+		private void CheckCell(int level, int x, int y, Action<TCollider, TCollider> collisionHandler)
 		{
-			var (_, grid) = multiGrid[level];
+			var grid = GetGridLevel(level);
 			var cell = grid[x, y];
-			CheckCell(cell, collisionHandler);
 			//check only with objects later in list
-			for (int i = 0; i < cell.Count; ++i)
+			for (int i = 0; i + 1 < cell.Count; ++i)
 			{
 				var obj = cell[i];
 				//check each collider against every other collider in the cell
@@ -104,30 +120,55 @@ namespace Example
 				{
 					collisionHandler(obj, cell[j]);
 				}
-				//check with containing cells with smaller level == bigger cell size
-				//we only need to check with the containing cells, because bigger neighbors are checked 
-				for(int l = 0; l < level; ++l)
+			}
+			foreach (var obj in cell)
+			{
+				//check 4 neighbors (of 8) for instance 3 with bigger y  and one with just bigger x
+				var existsBiggerX = x + 1 < grid.GetLength(0);
+				if (existsBiggerX)
 				{
-					var (_, lowResGrid) = multiGrid[l];
-					var biggerCell = lowResGrid[ x >> 1, y >> 1];
-					foreach(var element in biggerCell)
+					var biggerXcell = grid[x + 1, y];
+					foreach(var objB in biggerXcell)
 					{
-						collisionHandler(obj, element);
+						collisionHandler(obj, objB);
 					}
 				}
-				//check neighbors to east, south and southeast
+				if (y + 1 < grid.GetLength(1))
+				{
+					var biggerYcell = grid[x, y + 1];
+					foreach (var objB in biggerYcell)
+					{
+						collisionHandler(obj, objB);
+					}
+					if(existsBiggerX)
+					{
+						var bothBiggerCell = grid[x + 1, y + 1];
+						foreach (var objB in bothBiggerCell)
+						{
+							collisionHandler(obj, objB);
+						}
+					}
+					if(0 < x)
+					{
+						var neighbor = grid[x - 1, y + 1];
+						foreach (var objB in neighbor)
+						{
+							collisionHandler(obj, objB);
+						}
+					}
+				}
+				//check with containing cells with smaller level == bigger cell size
+				//we only need to check with the containing cells, because bigger neighbors are checked 
+				//for(int l = MinLevel; l < level; ++l)
+				//{
+				//	var lowResGrid = GetGridLevel(l);
+				//	var biggerCell = lowResGrid[ x >> 1, y >> 1];
+				//	foreach(var element in biggerCell)
+				//	{
+				//		collisionHandler(obj, element);
+				//	}
+				//}
 			}
 		}
-
-		private void CheckCell(List<ICircle2dCollider> cell, Action<ICircle2dCollider, ICircle2dCollider> collisionHandler)
-		{
-		}
-
-		private List<(float, List<ICircle2dCollider>[,])> multiGrid = new List<(float, List<ICircle2dCollider>[,])>();
-
-		public int GridLevels { get; }
-		public float MinX { get; }
-		public float MinY { get; }
-		public float Size { get; }
 	}
 }

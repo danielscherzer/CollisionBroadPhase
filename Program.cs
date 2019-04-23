@@ -19,7 +19,7 @@ namespace Example
 			var model = new Model();
 			var ui = new Ui(window, model);
 
-			var view = new View();
+			var view = new View(model);
 			window.Resized += (_, a) => view.Resize((int)a.Width, (int)a.Height);
 
 			window.KeyPressed += (_, a) =>
@@ -36,7 +36,7 @@ namespace Example
 				window.DispatchEvents();
 				var deltaTime = clock.Restart().AsSeconds();
 				model.Update(deltaTime);
-				view.Draw(model.GetGameObjects());
+				view.Draw();
 
 				window.PushGLStates();
 				ui.Draw();

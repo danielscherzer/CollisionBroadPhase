@@ -2,6 +2,7 @@ using OpenTK;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace Example
 {
@@ -12,8 +13,9 @@ namespace Example
 	{
 		public Model()
 		{
-			CreateAsteroids(gameObjects, 1000);
-			CollisionGrid = new CollisionMultiGrid(6, -1f, -1f, 2f);
+			CreateAsteroids(gameObjects, 1000, 0.005f, 0.03f);
+			CollisionMultiGrid = new CollisionMultiGrid<GameObject>(4, 4, -1f, -1f, 2f);
+			CollisionGrid = new CollisionGrid<GameObject>(-1f, -1f, 2f, 2f, 16, 16);
 		}
 
 		internal IEnumerable<GameObject> GetGameObjects()
@@ -40,47 +42,87 @@ namespace Example
 				stopWatch.Stop();
 				CollisionTime = stopWatch.ElapsedMilliseconds;
 
-				foreach (var collider in collidingSet)
+				foreach (var (collider1, collider2) in collidingSet)
 				{
-					collider.HandleCollision();
+					HandleCollision(collider1, collider2);
+					HandleCollision(collider2, collider1);
 				}
 				CollidingObjects = collidingSet.Count;
 			}
 		}
 
-		private IReadOnlyCollection<GameObject> FindCollisions()
+		private IReadOnlyCollection<(GameObject, GameObject)> FindCollisions()
 		{
+			var multiGridCollision = MultiGridCollision();
+			var gridCollision = GridCollision();
+			var diff = new HashSet<(GameObject, GameObject)>(gridCollision);
+			diff.SymmetricExceptWith(multiGridCollision);
+			CollGridDebug = diff;
+			if(0 != diff.Count)
+			{
+				Freeze = true;
+			}
 			if (UseCollissionGrid)
 			{
-				CollisionGrid.Clear();
-				foreach (var gameObject in gameObjects)
-				{
-					CollisionGrid.Add(gameObject);
-				}
-				return new List<GameObject>();
+				return multiGridCollision;
 			}
 			else
 			{
-				var collidingSet = new HashSet<GameObject>(); // a data structure that holds only distinct elements
-				//Check all game objects for collision with any other game object. And add each colliding game object to the colliding set.
-				for (int i = 0; i + 1 < gameObjects.Count; ++i)
-				{
-					for (int j = i + 1; j < gameObjects.Count; ++j)
-					{
-						if (gameObjects[i].Intersects(gameObjects[j]))
-						{
-							collidingSet.Add(gameObjects[i]);
-							collidingSet.Add(gameObjects[j]);
-						}
-					}
-				}
-				return collidingSet;
+				return BruteForceCollision();
 			}
+		}
+
+		private HashSet<(GameObject, GameObject)> BruteForceCollision()
+		{
+			var collidingSet = new HashSet<(GameObject,GameObject)>(); // a data structure that holds only distinct elements
+			//Check all game objects for collision with any other game object. And add each colliding game object to the colliding set.
+			for (int i = 0; i + 1 < gameObjects.Count; ++i)
+			{
+				for (int j = i + 1; j < gameObjects.Count; ++j)
+				{
+					TestForCollision(collidingSet, gameObjects[i], gameObjects[j]);
+				}
+			}
+			return collidingSet;
+		}
+
+		private static void TestForCollision(HashSet<(GameObject, GameObject)> collidingSet, GameObject a, GameObject b)
+		{
+			if (a.Intersects(b))
+			{
+				collidingSet.Add(a.GetHashCode() < b.GetHashCode() ? (a, b) : (b, a));
+			}
+		}
+
+		private HashSet<(GameObject, GameObject)> GridCollision()
+		{
+			CollisionGrid.Clear();
+			foreach(var gameObject in gameObjects)
+			{
+				CollisionGrid.Add(gameObject);
+			}
+			var collisions = new HashSet<(GameObject, GameObject)>();
+			CollisionGrid.FindAllCollisions((a, b) => TestForCollision(collisions, a, b));
+			return collisions;
+		}
+
+		private HashSet<(GameObject, GameObject)> MultiGridCollision()
+		{
+			CollisionMultiGrid.Clear();
+			foreach (var gameObject in gameObjects)
+			{
+				CollisionMultiGrid.Add(gameObject);
+			}
+			var collisions = new HashSet<(GameObject, GameObject)>();
+			CollisionMultiGrid.FindCollision((a, b) => TestForCollision(collisions, a, b));
+			return collisions;
 		}
 
 		private List<GameObject> gameObjects = new List<GameObject>();
 		private bool _collisionDetection = true;
-		internal CollisionMultiGrid CollisionGrid { get; }
+		internal CollisionMultiGrid<GameObject> CollisionMultiGrid { get; }
+		internal CollisionGrid<GameObject> CollisionGrid { get; }
+		internal IReadOnlyCollection<(GameObject, GameObject)> CollGridDebug { get; private set; } = new List<(GameObject, GameObject)>();
 
 		public int ObjectCount => gameObjects.Count;
 		public bool CollisionDetection
@@ -95,29 +137,12 @@ namespace Example
 		}
 		public int CollidingObjects { get; private set; }
 		public long CollisionTime { get; private set; }
-		public bool UseCollissionGrid { get; set; }
+		public bool UseCollissionGrid { get; set; } = true;
 		public bool Freeze { get; set; }
 
-		private static void CreateAsteroids(List<GameObject> gameObjects, uint count)
+		private static void CreateAsteroids(List<GameObject> gameObjects, uint count, float minSize, float variation)
 		{
-			GameObject NewAsteroid(float radius, Vector2 center)
-			{
-				var asteroid = new GameObject(center.X, center.Y, radius);
-				asteroid.OnCollision += () =>
-				{
-					asteroid.Velocity = -asteroid.Velocity;
-				};
-				return asteroid;
-			}
-
-			bool IntersectsAny(GameObject anotherObj)
-			{
-				foreach (var obj in gameObjects)
-				{
-					if (obj.Intersects(anotherObj)) return true;
-				}
-				return false;
-			}
+			GameObject NewAsteroid(float radius, Vector2 center) => new GameObject(center.X, center.Y, radius);
 
 			var randomNumber = new Random(12);
 			Vector2 RandomVector()
@@ -130,11 +155,19 @@ namespace Example
 			while (gameObjects.Count < count)
 			{
 				var center = RandomVector();
-				var newAsteroid = NewAsteroid(0.005f, center);
-				if (IntersectsAny(newAsteroid)) continue;
-				newAsteroid.Velocity = 0.1f / MathF.Sqrt(2) * RandomVector();
+				var radius = (float)randomNumber.NextDouble();
+				radius = MathF.Pow(radius, 8f); // more small ones than big ones
+				radius = radius * variation + minSize;
+				var newAsteroid = NewAsteroid(radius, center);
+				newAsteroid.Velocity = 0.91f / MathF.Sqrt(2) * RandomVector();
 				gameObjects.Add(newAsteroid);
 			}
+		}
+
+		private void HandleCollision(GameObject a, GameObject b)
+		{
+			var diff = a.Center - b.Center;
+			a.Velocity = diff;
 		}
 	}
 }
