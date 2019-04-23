@@ -13,10 +13,33 @@ namespace Example
 	{
 		public Model()
 		{
-			CreateAsteroids(gameObjects, 1000, 0.005f, 0.03f);
-			CollisionMultiGrid = new CollisionMultiGrid<GameObject>(4, 4, -1f, -1f, 2f);
-			CollisionGrid = new CollisionGrid<GameObject>(-1f, -1f, 2f, 2f, 16, 16);
+			var objects = 10000u;
+			var level = 5;
+			CreateAsteroids(gameObjects, objects, 0.001f, 0.0f);
+			var cells = (int)Math.Pow(2, level);
+			CollisionMultiGrid = new CollisionMultiGrid<GameObject>(level - 1, level, -1f, -1f, 2f);
+			CollisionGrid = new CollisionGrid<GameObject>(-1f, -1f, 2f, 2f, cells, cells);
+			CollisionSAP = new CollisionSAP<GameObject>();
 		}
+
+		public enum CollisionMethodTypes { BruteForce, Grid, MultiGrid, SAP };
+		public int ObjectCount => gameObjects.Count;
+		public bool CollisionDetection
+		{
+			get => _collisionDetection;
+			set
+			{
+				_collisionDetection = value;
+				CollisionCount = 0;
+			}
+		}
+		private bool _collisionDetection = true;
+
+		public int CollisionCount { get; private set; }
+		public long CollisionTime { get; private set; }
+		public CollisionMethodTypes CollisionMethod { get; set; } = CollisionMethodTypes.Grid;
+		public bool Freeze { get; set; }
+		internal IReadOnlyCollection<(GameObject, GameObject)> CollGridDebug { get; private set; } = new List<(GameObject, GameObject)>();
 
 		internal IEnumerable<GameObject> GetGameObjects()
 		{
@@ -41,35 +64,38 @@ namespace Example
 				var collidingSet = FindCollisions();
 				stopWatch.Stop();
 				CollisionTime = stopWatch.ElapsedMilliseconds;
-
 				foreach (var (collider1, collider2) in collidingSet)
 				{
 					HandleCollision(collider1, collider2);
 					HandleCollision(collider2, collider1);
 				}
-				CollidingObjects = collidingSet.Count;
+				CollisionCount = collidingSet.Count;
 			}
 		}
 
+		private List<GameObject> gameObjects = new List<GameObject>();
+		private CollisionGrid<GameObject> CollisionGrid { get; }
+		internal CollisionMultiGrid<GameObject> CollisionMultiGrid { get; }
+		private CollisionSAP<GameObject> CollisionSAP { get; }
+
 		private IReadOnlyCollection<(GameObject, GameObject)> FindCollisions()
 		{
-			var multiGridCollision = MultiGridCollision();
-			var gridCollision = GridCollision();
-			var diff = new HashSet<(GameObject, GameObject)>(gridCollision);
-			diff.SymmetricExceptWith(multiGridCollision);
+			switch(CollisionMethod)
+			{
+				case CollisionMethodTypes.BruteForce: return BruteForceCollision();
+				case CollisionMethodTypes.Grid: return GridCollision();
+				case CollisionMethodTypes.MultiGrid: return MultiGridCollision();
+				case CollisionMethodTypes.SAP: return SAPCollision();
+			}
+			var collision = BruteForceCollision();
+			var diff = new HashSet<(GameObject, GameObject)>(GridCollision());
+			diff.SymmetricExceptWith(collision);
 			CollGridDebug = diff;
-			if(0 != diff.Count)
+			if (0 != diff.Count)
 			{
 				Freeze = true;
 			}
-			if (UseCollissionGrid)
-			{
-				return multiGridCollision;
-			}
-			else
-			{
-				return BruteForceCollision();
-			}
+			return collision;
 		}
 
 		private HashSet<(GameObject, GameObject)> BruteForceCollision()
@@ -118,27 +144,17 @@ namespace Example
 			return collisions;
 		}
 
-		private List<GameObject> gameObjects = new List<GameObject>();
-		private bool _collisionDetection = true;
-		internal CollisionMultiGrid<GameObject> CollisionMultiGrid { get; }
-		internal CollisionGrid<GameObject> CollisionGrid { get; }
-		internal IReadOnlyCollection<(GameObject, GameObject)> CollGridDebug { get; private set; } = new List<(GameObject, GameObject)>();
-
-		public int ObjectCount => gameObjects.Count;
-		public bool CollisionDetection
+		private HashSet<(GameObject, GameObject)> SAPCollision()
 		{
-			get => _collisionDetection;
-			set
+			CollisionSAP.Clear();
+			foreach (var gameObject in gameObjects)
 			{
-				_collisionDetection = value;
-				CollidingObjects = 0;
-				CollisionTime = 0;
+				CollisionSAP.Add(gameObject);
 			}
+			var collisions = new HashSet<(GameObject, GameObject)>();
+			CollisionSAP.FindAllCollisions((a, b) => TestForCollision(collisions, a, b));
+			return collisions;
 		}
-		public int CollidingObjects { get; private set; }
-		public long CollisionTime { get; private set; }
-		public bool UseCollissionGrid { get; set; } = true;
-		public bool Freeze { get; set; }
 
 		private static void CreateAsteroids(List<GameObject> gameObjects, uint count, float minSize, float variation)
 		{
@@ -164,10 +180,10 @@ namespace Example
 			}
 		}
 
-		private void HandleCollision(GameObject a, GameObject b)
+		private static void HandleCollision(GameObject a, GameObject b)
 		{
 			var diff = a.Center - b.Center;
-			a.Velocity = diff;
+			a.Velocity = diff.Normalized() * a.Velocity.Length;
 		}
 	}
 }

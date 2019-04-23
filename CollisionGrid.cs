@@ -61,13 +61,9 @@
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
-			for (int y = 0; y < CellCountY; ++y)
+			foreach(var cell in cells)
 			{
-				for (int x = 0; x < CellCountX; ++x)
-				{
-					var cell = cells[x, y];
-					CheckCell(collisionHandler, cell);
-				}
+				CheckCell(collisionHandler, cell);
 			}
 		}
 

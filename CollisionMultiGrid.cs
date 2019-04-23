@@ -11,6 +11,8 @@ namespace Example
 	/// So <seealso cref="TCollider"/> are inserted in the highest level, were the cell size is bigger then the radius,
 	/// so only direct neighbors need to be considered.
 	/// Idea from Game Gems 2: Multi-Resolution Maps for Interaction Detection by Jan Svarovsky
+	/// Please note that Game Gems article contains an error in what neighbors have to be traversed (see code below for details)
+	/// Not 3, but 4 neighbors have to be traversed!
 	/// </summary>
 	class CollisionMultiGrid<TCollider> where TCollider : class
 	{
@@ -123,51 +125,54 @@ namespace Example
 			}
 			foreach (var obj in cell)
 			{
-				//check 4 neighbors (of 8) for instance 3 with bigger y  and one with just bigger x
+				void CheckCell(IReadOnlyList<TCollider> cellB)
+				{
+					foreach (var objB in cellB)
+					{
+						collisionHandler(obj, objB);
+					}
+				}
+
+				//check 4 neighbors (of 8) for instance 3 with bigger y and one with just bigger x
 				var existsBiggerX = x + 1 < grid.GetLength(0);
 				if (existsBiggerX)
 				{
-					var biggerXcell = grid[x + 1, y];
-					foreach(var objB in biggerXcell)
-					{
-						collisionHandler(obj, objB);
-					}
+					CheckCell(grid[x + 1, y]);
 				}
 				if (y + 1 < grid.GetLength(1))
 				{
-					var biggerYcell = grid[x, y + 1];
-					foreach (var objB in biggerYcell)
+					CheckCell(grid[x, y + 1]);
+					if (existsBiggerX)
 					{
-						collisionHandler(obj, objB);
+						CheckCell(grid[x + 1, y + 1]);
 					}
-					if(existsBiggerX)
+					if (0 < x)
 					{
-						var bothBiggerCell = grid[x + 1, y + 1];
-						foreach (var objB in bothBiggerCell)
-						{
-							collisionHandler(obj, objB);
-						}
+						CheckCell(grid[x - 1, y + 1]);
 					}
-					if(0 < x)
+				}
+
+				//check with cells with smaller level == bigger cell size
+				//we only need to check with direct neighbors in each level
+				for (int l = level - 1, shift = 1; l >= MinLevel; --l, ++shift)
+				{
+					var lowResGrid = GetGridLevel(l);
+					var biggerX = x >> shift;
+					var biggerY = y >> shift;
+					var biggerCell = lowResGrid[biggerX, biggerY];
+					CheckCell(biggerCell);
+					var minX = Math.Max(0, biggerX - 1);
+					var minY = Math.Max(0, biggerY - 1);
+					var maxX = Math.Min(lowResGrid.GetLength(0), biggerX + 2);
+					var maxY = Math.Min(lowResGrid.GetLength(1), biggerY + 2);
+					for (int row = minY; row < maxY; ++ row)
 					{
-						var neighbor = grid[x - 1, y + 1];
-						foreach (var objB in neighbor)
+						for (int column = minX; column < maxX; ++column)
 						{
-							collisionHandler(obj, objB);
+							CheckCell(lowResGrid[column, row]);
 						}
 					}
 				}
-				//check with containing cells with smaller level == bigger cell size
-				//we only need to check with the containing cells, because bigger neighbors are checked 
-				//for(int l = MinLevel; l < level; ++l)
-				//{
-				//	var lowResGrid = GetGridLevel(l);
-				//	var biggerCell = lowResGrid[ x >> 1, y >> 1];
-				//	foreach(var element in biggerCell)
-				//	{
-				//		collisionHandler(obj, element);
-				//	}
-				//}
 			}
 		}
 	}

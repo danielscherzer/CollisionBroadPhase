@@ -27,7 +27,7 @@ namespace Example
 
 		public void Draw()
 		{
-			if (model.UseCollissionGrid)
+			if (model.CollisionMethod == Model.CollisionMethodTypes.MultiGrid)
 			{
 				var sum = 0;
 				foreach(var (level, uiGrid) in uiGrids)

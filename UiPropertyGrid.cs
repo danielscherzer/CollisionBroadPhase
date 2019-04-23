@@ -81,11 +81,11 @@ namespace Example
 				this.properties.Add((text, property, obj));
 				ExpandBackground(text.GetGlobalBounds());
 			}
-			background.Size += 2f * new Vector2f(border, 0f);
 		}
 
 		private void ExpandBackground(FloatRect bounds)
 		{
+			bounds.Width += 2f * border;
 			var combi = Combine(new FloatRect(background.Position, background.Size), bounds);
 			//background.Position = new Vector2f(combi.Left, combi.Top); //only size should grow
 			background.Size = new Vector2f(combi.Width, combi.Height);
@@ -114,11 +114,32 @@ namespace Example
 				{
 					var value = property.GetValue(instance);
 					var setMethod = property.GetSetMethod();
-					if (value is bool && !(setMethod is null))
+					if (setMethod is null) continue;
+					switch(value)
 					{
-						property.SetValue(instance, !(bool)value);
+						case bool boolValue:
+							property.SetValue(instance, !boolValue);
+							InvalidateBackgroundSize();
+							break;
+						case Enum enumValue:
+							var possibleValues = Enum.GetValues(enumValue.GetType());
+							var maxVal = possibleValues.Length - 1;
+							var val = Convert.ToInt32(enumValue);
+							val += e.Button == Mouse.Button.Left ? 1 : -1;
+							property.SetValue(instance, Math.Clamp(val, 0, maxVal));
+							InvalidateBackgroundSize();
+							break;
 					}
 				}
+			}
+		}
+
+		private void InvalidateBackgroundSize()
+		{
+			foreach (var (text, property, instance) in properties)
+			{
+				text.DisplayedString = property.GetValue(instance)?.ToString();
+				ExpandBackground(text.GetGlobalBounds());
 			}
 		}
 	}
