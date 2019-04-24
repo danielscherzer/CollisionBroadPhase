@@ -5,33 +5,38 @@ namespace Example
 {
 	/// <summary>
 	/// Sweep and Prune collision detection
-	/// Not implemented just quick test, if it is usable for non iterative applications
-	/// Result: too slow, but if used iteratively with insertion sort it could be rather fast
+	/// Not fully implemented just quick test, if it is usable for non iterative applications
+	/// Result: Too slow if rebuilt each frame.
+	/// If built iteratively: fast if little movement, degenerates with more movement (more sorting)
+	/// Do not add/delete GameObjects without adding/removing them from the SAP structure too!
 	/// </summary>
 	public class CollisionSAP<TCollider>
 	{
-		internal void Clear()
-		{
-		}
-
 		internal void Add(IBox2DCollider objectBounds)
 		{
-			if (!FirstTime) return;
-			boundsX.Add(new Data(true, objectBounds));
-			boundsX.Add(new Data(false, objectBounds));
+			InsertSorted(new LowerXBound(objectBounds));
+			InsertSorted(new UpperXBound(objectBounds));
+		}
+
+		private void InsertSorted(Bound bound)
+		{
+			var index = boundsX.BinarySearch(bound);
+			if (index < 0) index = ~index;
+			boundsX.Insert(index, bound);
+		}
+
+		internal void UpdateBounds()
+		{
+			foreach(var bound in boundsX)
+			{
+				bound.UpdateValue();
+			}
+			InsertionSort();
 		}
 
 		internal void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
-			if (FirstTime)
-			{
-				boundsX.Sort();
-			}
-			else
-			{
-				InsertionSort();
-			}
-			FirstTime = false;
+			//TODO: find active pairs (do we need a second boundsY list?)
 		}
 
 		private void InsertionSort()
@@ -54,24 +59,48 @@ namespace Example
 			}
 		}
 
-		private struct Data : IComparable<Data>
+		private abstract class Bound : IComparable<Bound>
 		{
-			public bool IsMin { get; }
-			public IBox2DCollider Collider { get; }
-			public float Value { get; }
+			protected float _value;
 
-			public Data(bool isMin, IBox2DCollider collider)
+			public IBox2DCollider Collider { get; }
+			public float Value => _value;
+
+			public Bound(IBox2DCollider collider)
 			{
-				IsMin = isMin;
 				Collider = collider;
-				Value = isMin ? collider.MinX : collider.MaxX;
+				UpdateValue();
 			}
 
-			public int CompareTo(Data other) => Value.CompareTo(other.Value);
+			abstract public void UpdateValue();
+
+			public int CompareTo(Bound other) => Value.CompareTo(other.Value);
 		}
 
-		private readonly List<Data> boundsX = new List<Data>();
+		private class LowerXBound : Bound
+		{
+			public LowerXBound(IBox2DCollider collider) : base(collider)
+			{
+			}
 
-		public bool FirstTime { get; private set; } = true;
+			public override void UpdateValue()
+			{
+				_value = Collider.MinX;
+			}
+		}
+
+		private class UpperXBound : Bound
+		{
+			public UpperXBound(IBox2DCollider collider) : base(collider)
+			{
+			}
+
+			public override void UpdateValue()
+			{
+				_value = Collider.MaxX;
+			}
+		}
+
+		private readonly List<Bound> boundsX = new List<Bound>();
 	}
 }

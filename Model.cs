@@ -14,15 +14,20 @@ namespace Example
 		public Model()
 		{
 			var objects = 10000u;
-			var level = 5;
-			CreateAsteroids(gameObjects, objects, 0.001f, 0.0f);
+			var level = 6;
+			CreateAsteroids(gameObjects, objects, 0.005f, 0.0f);
 			var cells = (int)Math.Pow(2, level);
 			CollisionMultiGrid = new CollisionMultiGrid<GameObject>(level - 1, level, -1f, -1f, 2f);
 			CollisionGrid = new CollisionGrid<GameObject>(-1f, -1f, 2f, 2f, cells, cells);
+			//SAP only usable if iterative so do not add/delete GameObjects without adding/removing them from the SAP structure too!
 			CollisionSAP = new CollisionSAP<GameObject>();
+			foreach (var gameObject in gameObjects)
+			{
+				CollisionSAP.Add(gameObject);
+			}
 		}
 
-		public enum CollisionMethodTypes { BruteForce, Grid, MultiGrid, SAP };
+		public enum CollisionMethodTypes { BruteForce, Grid, MultiGrid, SAPincomplete };
 		public int ObjectCount => gameObjects.Count;
 		public bool CollisionDetection
 		{
@@ -36,9 +41,9 @@ namespace Example
 		private bool _collisionDetection = true;
 
 		public int CollisionCount { get; private set; }
-		public long CollisionTime { get; private set; }
-		public CollisionMethodTypes CollisionMethod { get; set; } = CollisionMethodTypes.Grid;
-		public bool Freeze { get; set; }
+		public double CollisionTime { get; private set; }
+		public CollisionMethodTypes CollisionMethod { get; set; } = CollisionMethodTypes.SAPincomplete;
+		public bool Freeze { get; set; } = true;
 		internal IReadOnlyCollection<(GameObject, GameObject)> CollGridDebug { get; private set; } = new List<(GameObject, GameObject)>();
 
 		internal IEnumerable<GameObject> GetGameObjects()
@@ -63,7 +68,7 @@ namespace Example
 				stopWatch.Start();
 				var collidingSet = FindCollisions();
 				stopWatch.Stop();
-				CollisionTime = stopWatch.ElapsedMilliseconds;
+				CollisionTime = stopWatch.Elapsed.TotalMilliseconds;
 				foreach (var (collider1, collider2) in collidingSet)
 				{
 					HandleCollision(collider1, collider2);
@@ -85,7 +90,7 @@ namespace Example
 				case CollisionMethodTypes.BruteForce: return BruteForceCollision();
 				case CollisionMethodTypes.Grid: return GridCollision();
 				case CollisionMethodTypes.MultiGrid: return MultiGridCollision();
-				case CollisionMethodTypes.SAP: return SAPCollision();
+				case CollisionMethodTypes.SAPincomplete: return SAPCollision();
 			}
 			var collision = BruteForceCollision();
 			var diff = new HashSet<(GameObject, GameObject)>(GridCollision());
@@ -146,11 +151,7 @@ namespace Example
 
 		private HashSet<(GameObject, GameObject)> SAPCollision()
 		{
-			CollisionSAP.Clear();
-			foreach (var gameObject in gameObjects)
-			{
-				CollisionSAP.Add(gameObject);
-			}
+			CollisionSAP.UpdateBounds();
 			var collisions = new HashSet<(GameObject, GameObject)>();
 			CollisionSAP.FindAllCollisions((a, b) => TestForCollision(collisions, a, b));
 			return collisions;
