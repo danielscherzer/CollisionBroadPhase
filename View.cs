@@ -54,13 +54,13 @@ namespace Example
 			{
 				DrawAsteroid(asteroid.Center, asteroid.Radius);
 			}
-			GL.Color3(Color.White);
+			GL.Color3(Color.DarkGray);
 			foreach (var asteroid in gameObjects)
 			{
 				DrawAsteroid(asteroid.Center, asteroid.Radius, PrimitiveType.LineLoop);
 			}
 			GL.Color3(Color.Red);
-			foreach (var (asteroid1, asteroid2) in model.CollGridDebug)
+			foreach (var (asteroid1, asteroid2) in model.CollisionAlgoDifference)
 			{
 				DrawAsteroid(asteroid1.Center, asteroid1.Radius, PrimitiveType.LineLoop);
 				DrawAsteroid(asteroid2.Center, asteroid2.Radius, PrimitiveType.LineLoop);

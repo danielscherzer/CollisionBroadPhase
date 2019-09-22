@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 using SFML.System;
+using System.Collections.Generic;
 
 namespace Example
 {
@@ -15,27 +12,34 @@ namespace Example
 			this.model = model;
 			uiPropertyGrid = new UiPropertyGrid(window, new Vector2f(10, 10), model);
 
-			var collGrid = model.CollisionMultiGrid;
-			var colors = new Color[] { Color.Red, Color.Magenta, Color.Green, Color.Yellow, Color.White};
-			for(int level = collGrid.MaxLevel; level >= collGrid.MinLevel; --level)
+			var collMultiGrid = model.CollisionMultiGrid;
+			var colors = new Color[] { Color.White, Color.Blue, Color.Yellow , Color.Green, Color.Magenta, Color.Red };
+			for(int level = collMultiGrid.MaxLevel, colorId = 0; level >= collMultiGrid.MinLevel; --level, ++colorId)
 			{
-				var gridLevel = collGrid.GetGridLevel(level);
-				var color = colors[level % colors.Length];
+				var gridLevel = collMultiGrid.GetGridLevel(level);
+				var color = colors[colorId % colors.Length];
 				uiGrids.Add(level, new UiGrid((uint)gridLevel.GetLength(0), (uint)gridLevel.GetLength(1), new Vector2f(0, 0), (Vector2f)window.Size, color));
 			}
+			uiGrid = new UiGrid((uint)model.CollisionGrid.CellCountX, (uint)model.CollisionGrid.CellCountY, new Vector2f(0, 0), (Vector2f)window.Size, Color.White);
 		}
 
 		public void Draw()
 		{
-			if (model.CollisionMethod == Model.CollisionMethodTypes.MultiGrid)
+			switch(model.CollisionMethod)
 			{
-				var sum = 0;
-				foreach(var (level, uiGrid) in uiGrids)
-				{
-					sum += UpdateGrid(uiGrid, level);
+				case Model.CollisionMethodTypes.MultiGrid:
+					foreach (var (level, uiGrid) in uiGrids)
+					{
+						UpdateGrid(uiGrid, model.CollisionMultiGrid.GetGridLevel(level));
+						window.Draw(uiGrid);
+					}
+					break;
+				case Model.CollisionMethodTypes.Grid:
+					UpdateGrid(uiGrid, model.CollisionGrid.GetGrid());
 					window.Draw(uiGrid);
-				}
-				Debug.Assert(model.ObjectCount == sum);
+					break;
+				default:
+					break;
 			}
 			uiPropertyGrid.Update();
 			uiPropertyGrid.Draw();
@@ -45,35 +49,18 @@ namespace Example
 		private Model model;
 		private readonly Dictionary<int, UiGrid> uiGrids = new Dictionary<int, UiGrid>();
 		private readonly UiPropertyGrid uiPropertyGrid;
+		private readonly UiGrid uiGrid;
 
-		private int UpdateGrid(UiGrid uiGrid, int level)
+		private void UpdateGrid(UiGrid uiGrid, IReadOnlyList<GameObject>[,] grid)
 		{
-			var sum = 0;
-			var levelCounts = GetLevelCounts(level);
 			for (int column = 0; column < uiGrid.Columns; ++column)
 			{
 				for (int row = 0; row < uiGrid.Rows; ++row)
 				{
-					var count = levelCounts[column, row];
-					sum += count;
+					var count = grid[column, row].Count;
 					uiGrid[column, row] = count.ToString();
 				}
 			}
-			return sum;
-		}
-
-		internal int[,] GetLevelCounts(int level)
-		{
-			var gridLevel = model.CollisionMultiGrid.GetGridLevel(level);
-			var levelCounts = new int[gridLevel.GetLength(0), gridLevel.GetLength(1)];
-			for (int y = 0; y < levelCounts.GetLength(1); ++y)
-			{
-				for (int x = 0; x < levelCounts.GetLength(0); ++x)
-				{
-					levelCounts[x, y] = gridLevel[x, y].Count;
-				}
-			}
-			return levelCounts;
 		}
 	}
 }

@@ -13,9 +13,9 @@ namespace Example
 	{
 		public Model()
 		{
-			var objects = 10000u;
-			var level = 6;
-			CreateAsteroids(gameObjects, objects, 0.005f, 0.0f);
+			var objects = 2000u;
+			var level = 5;
+			CreateAsteroids(gameObjects, objects, 0.01f, 0.002f);
 			var cells = (int)Math.Pow(2, level);
 			CollisionMultiGrid = new CollisionMultiGrid<GameObject>(level - 1, level, -1f, -1f, 2f);
 			CollisionGrid = new CollisionGrid<GameObject>(-1f, -1f, 2f, 2f, cells, cells);
@@ -27,7 +27,7 @@ namespace Example
 			}
 		}
 
-		public enum CollisionMethodTypes { BruteForce, Grid, MultiGrid, SAPincomplete };
+		public enum CollisionMethodTypes { BruteForce, Grid, MultiGrid, SAP_X };
 		public int ObjectCount => gameObjects.Count;
 		public bool CollisionDetection
 		{
@@ -41,10 +41,11 @@ namespace Example
 		private bool _collisionDetection = true;
 
 		public int CollisionCount { get; private set; }
-		public double CollisionTime { get; private set; }
-		public CollisionMethodTypes CollisionMethod { get; set; } = CollisionMethodTypes.SAPincomplete;
+		public double CollisionTimeMsec { get; private set; }
+		public CollisionMethodTypes CollisionMethod { get; set; } = CollisionMethodTypes.MultiGrid;
 		public bool Freeze { get; set; } = true;
-		internal IReadOnlyCollection<(GameObject, GameObject)> CollGridDebug { get; private set; } = new List<(GameObject, GameObject)>();
+		public bool DebugAlgo { get; set; } = false;
+		internal IEnumerable<(GameObject, GameObject)> CollisionAlgoDifference { get; private set; } = new List<(GameObject, GameObject)>();
 
 		internal IEnumerable<GameObject> GetGameObjects()
 		{
@@ -68,7 +69,7 @@ namespace Example
 				stopWatch.Start();
 				var collidingSet = FindCollisions();
 				stopWatch.Stop();
-				CollisionTime = stopWatch.Elapsed.TotalMilliseconds;
+				CollisionTimeMsec = stopWatch.Elapsed.TotalMilliseconds;
 				foreach (var (collider1, collider2) in collidingSet)
 				{
 					HandleCollision(collider1, collider2);
@@ -79,28 +80,31 @@ namespace Example
 		}
 
 		private List<GameObject> gameObjects = new List<GameObject>();
-		private CollisionGrid<GameObject> CollisionGrid { get; }
+		internal CollisionGrid<GameObject> CollisionGrid { get; }
 		internal CollisionMultiGrid<GameObject> CollisionMultiGrid { get; }
 		private CollisionSAP<GameObject> CollisionSAP { get; }
 
 		private IReadOnlyCollection<(GameObject, GameObject)> FindCollisions()
 		{
-			switch(CollisionMethod)
+			HashSet<(GameObject, GameObject)> result;
+			switch (CollisionMethod)
 			{
-				case CollisionMethodTypes.BruteForce: return BruteForceCollision();
-				case CollisionMethodTypes.Grid: return GridCollision();
-				case CollisionMethodTypes.MultiGrid: return MultiGridCollision();
-				case CollisionMethodTypes.SAPincomplete: return SAPCollision();
+				case CollisionMethodTypes.BruteForce: result = BruteForceCollision(); break;
+				case CollisionMethodTypes.Grid: result = GridCollision(); break;
+				case CollisionMethodTypes.MultiGrid: result = MultiGridCollision(); break;
+				case CollisionMethodTypes.SAP_X: result = SAPCollision(); break;
+				default: result = new HashSet<(GameObject, GameObject)>(); break;
 			}
-			var collision = BruteForceCollision();
-			var diff = new HashSet<(GameObject, GameObject)>(GridCollision());
-			diff.SymmetricExceptWith(collision);
-			CollGridDebug = diff;
+			if(!DebugAlgo) return result;
+
+			var diff = new HashSet<(GameObject, GameObject)>(BruteForceCollision());
+			diff.SymmetricExceptWith(result);
+			CollisionAlgoDifference = diff;
 			if (0 != diff.Count)
 			{
 				Freeze = true;
 			}
-			return collision;
+			return result;
 		}
 
 		private HashSet<(GameObject, GameObject)> BruteForceCollision()
@@ -176,7 +180,7 @@ namespace Example
 				radius = MathF.Pow(radius, 8f); // more small ones than big ones
 				radius = radius * variation + minSize;
 				var newAsteroid = NewAsteroid(radius, center);
-				newAsteroid.Velocity = 0.91f / MathF.Sqrt(2) * RandomVector();
+				newAsteroid.Velocity = 0.1f * RandomVector();
 				gameObjects.Add(newAsteroid);
 			}
 		}

@@ -7,18 +7,18 @@ namespace Example
 	/// Sweep and Prune collision detection
 	/// Not fully implemented just quick test, if it is usable for non iterative applications
 	/// Result: Too slow if rebuilt each frame.
-	/// If built iteratively: fast if little movement, degenerates with more movement (more sorting)
+	/// If built iteratively: fast if little movement (insertion sorting fast), degenerates with more movement (more sorting)
 	/// Do not add/delete GameObjects without adding/removing them from the SAP structure too!
 	/// </summary>
-	public class CollisionSAP<TCollider>
+	public class CollisionSAP<TCollider> where TCollider : IBox2DCollider
 	{
-		internal void Add(IBox2DCollider objectBounds)
+		internal void Add(TCollider objectBounds)
 		{
-			InsertSorted(new LowerXBound(objectBounds));
-			InsertSorted(new UpperXBound(objectBounds));
+			InsertIntoSorted(new LowerXBound(objectBounds));
+			InsertIntoSorted(new UpperXBound(objectBounds));
 		}
 
-		private void InsertSorted(Bound bound)
+		private void InsertIntoSorted(Bound bound)
 		{
 			var index = boundsX.BinarySearch(bound);
 			if (index < 0) index = ~index;
@@ -36,9 +36,32 @@ namespace Example
 
 		internal void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
+			activeBounds.Clear();
 			//TODO: find active pairs (do we need a second boundsY list?)
+			foreach(var bound in boundsX)
+			{
+				switch(bound)
+				{
+					case LowerXBound lower:
+						// only add starting colliders to active list
+						activeBounds.Add(bound.Collider);
+						break;
+					case UpperXBound upper:
+						// this collider has ended -> remove from active list
+						activeBounds.Remove(bound.Collider);
+						// check for collision with all on active list
+						foreach (var collider in activeBounds)
+						{
+							collisionHandler(bound.Collider, collider);
+						}
+						break;
+				}
+			}
 		}
 
+		/// <summary>
+		/// O(n) for a nearly sorted list
+		/// </summary>
 		private void InsertionSort()
 		{
 			for (int i = 1; i < boundsX.Count; i++)
@@ -63,10 +86,10 @@ namespace Example
 		{
 			protected float _value;
 
-			public IBox2DCollider Collider { get; }
+			public TCollider Collider { get; }
 			public float Value => _value;
 
-			public Bound(IBox2DCollider collider)
+			public Bound(TCollider collider)
 			{
 				Collider = collider;
 				UpdateValue();
@@ -79,28 +102,19 @@ namespace Example
 
 		private class LowerXBound : Bound
 		{
-			public LowerXBound(IBox2DCollider collider) : base(collider)
-			{
-			}
+			public LowerXBound(TCollider collider) : base(collider) { }
 
-			public override void UpdateValue()
-			{
-				_value = Collider.MinX;
-			}
+			public override void UpdateValue() => _value = Collider.MinX;
 		}
 
 		private class UpperXBound : Bound
 		{
-			public UpperXBound(IBox2DCollider collider) : base(collider)
-			{
-			}
+			public UpperXBound(TCollider collider) : base(collider) { }
 
-			public override void UpdateValue()
-			{
-				_value = Collider.MaxX;
-			}
+			public override void UpdateValue() => _value = Collider.MaxX;
 		}
 
 		private readonly List<Bound> boundsX = new List<Bound>();
+		private readonly HashSet<TCollider> activeBounds = new HashSet<TCollider>();
 	}
 }

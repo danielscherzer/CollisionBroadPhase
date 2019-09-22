@@ -79,7 +79,8 @@
 			}
 		}
 
-		public IEnumerable<TCollider> this[int x, int y] { get { return cells[x, y]; } }
+		public IReadOnlyList<TCollider> this[int x, int y] { get { return cells[x, y]; } }
+		public IReadOnlyList<TCollider>[,] GetGrid() => cells;
 
 		private readonly List<TCollider>[,] cells;
 	}

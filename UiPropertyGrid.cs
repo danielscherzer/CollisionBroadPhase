@@ -115,7 +115,8 @@ namespace Example
 					var value = property.GetValue(instance);
 					var setMethod = property.GetSetMethod();
 					if (setMethod is null) continue;
-					switch(value)
+					var increment = e.Button == Mouse.Button.Left ? 1 : -1;
+					switch (value)
 					{
 						case bool boolValue:
 							property.SetValue(instance, !boolValue);
@@ -125,8 +126,18 @@ namespace Example
 							var possibleValues = Enum.GetValues(enumValue.GetType());
 							var maxVal = possibleValues.Length - 1;
 							var val = Convert.ToInt32(enumValue);
-							val += e.Button == Mouse.Button.Left ? 1 : -1;
+							val += increment;
 							property.SetValue(instance, Math.Clamp(val, 0, maxVal));
+							InvalidateBackgroundSize();
+							break;
+						case int intValue:
+							intValue += increment;
+							property.SetValue(instance, intValue);
+							InvalidateBackgroundSize();
+							break;
+						case float floatValue:
+							floatValue += 0.1f * increment;
+							property.SetValue(instance, floatValue);
 							InvalidateBackgroundSize();
 							break;
 					}
