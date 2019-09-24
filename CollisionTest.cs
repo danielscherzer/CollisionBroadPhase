@@ -2,6 +2,17 @@
 {
 	public static class CollisionTest
 	{
+		public static bool IntersectsX(this IBox2DCollider a, IBox2DCollider b)
+		{
+			bool noXintersect = (a.MaxX <= b.MinX) || (a.MinX >= b.MaxX);
+			return !noXintersect;
+		}
+
+		public static bool IntersectsY(this IBox2DCollider a, IBox2DCollider b)
+		{
+			bool noYintersect = (a.MaxY <= b.MinY) || (a.MinY >= b.MaxY);
+			return !noYintersect;
+		}
 		/// <summary>
 		/// Test for intersection of two rectangles (excluding borders)
 		/// </summary>

@@ -46,7 +46,7 @@ namespace Example
 
 		internal void Draw()
 		{
-			var gameObjects = model.GetGameObjects();
+			var gameObjects = model.GameObjects;
 			GL.Clear(ClearBufferMask.ColorBufferBit);
 			GL.Color3(Color.Gray);
 			GL.BindVertexArray(vertexArray); // activate vertex array
@@ -96,7 +96,7 @@ namespace Example
 			return points;
 		}
 
-		private void DrawAsteroid(Vector2 center, float radius, PrimitiveType primitiveType = PrimitiveType.TriangleFan)
+		private void DrawAsteroid(System.Numerics.Vector2 center, float radius, PrimitiveType primitiveType = PrimitiveType.TriangleFan)
 		{
 			GL.PushMatrix();
 			GL.Translate(center.X, center.Y, 0f);

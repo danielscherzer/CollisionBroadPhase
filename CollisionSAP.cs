@@ -12,17 +12,19 @@ namespace Example
 	/// </summary>
 	public class CollisionSAP<TCollider> where TCollider : IBox2DCollider
 	{
-		internal void Add(TCollider objectBounds)
+		public void Add(TCollider objectBounds)
 		{
-			InsertIntoSorted(new LowerXBound(objectBounds));
-			InsertIntoSorted(new UpperXBound(objectBounds));
+			InsertIntoSorted(boundsX, new LowerXBound(objectBounds));
+			InsertIntoSorted(boundsX, new UpperXBound(objectBounds));
+			InsertIntoSorted(boundsY, new LowerYBound(objectBounds));
+			InsertIntoSorted(boundsY, new UpperYBound(objectBounds));
 		}
 
-		private void InsertIntoSorted(Bound bound)
+		public void Clear()
 		{
-			var index = boundsX.BinarySearch(bound);
-			if (index < 0) index = ~index;
-			boundsX.Insert(index, bound);
+			boundsX.Clear();
+			boundsY.Clear();
+			fullOverlaps.Clear();
 		}
 
 		internal void UpdateBounds()
@@ -31,12 +33,20 @@ namespace Example
 			{
 				bound.UpdateValue();
 			}
-			InsertionSort();
+			InsertionSort(boundsX);
+
+			foreach (var bound in boundsY)
+			{
+				bound.UpdateValue();
+			}
+			InsertionSort(boundsY);
 		}
 
 		internal void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
-			activeBounds.Clear();
+			var activeBounds = new HashSet<TCollider>();
+			//var debug = new List<int>();
+			//activeBounds.Clear();
 			//TODO: find active pairs (do we need a second boundsY list?)
 			foreach(var bound in boundsX)
 			{
@@ -48,35 +58,18 @@ namespace Example
 						break;
 					case UpperXBound upper:
 						// this collider has ended -> remove from active list
-						activeBounds.Remove(bound.Collider);
+						var colliderA = bound.Collider;
+						activeBounds.Remove(colliderA);
+	//					debug.Add(activeBounds.Count);
 						// check for collision with all on active list
-						foreach (var collider in activeBounds)
+						foreach (var colliderB in activeBounds)
 						{
-							collisionHandler(bound.Collider, collider);
+							// do y-check then call exact collision handler
+							if (colliderA.IntersectsY(colliderB))
+							{
+								collisionHandler(colliderA, colliderB);
+							}
 						}
-						break;
-				}
-			}
-		}
-
-		/// <summary>
-		/// O(n) for a nearly sorted list
-		/// </summary>
-		private void InsertionSort()
-		{
-			for (int i = 1; i < boundsX.Count; i++)
-			{
-				int j = i;
-				while (j > 0)
-				{
-					if (0 < boundsX[j - 1].CompareTo(boundsX[j]))
-					{
-						var temp = boundsX[j - 1];
-						boundsX[j - 1] = boundsX[j];
-						boundsX[j] = temp;
-						j--;
-					}
-					else
 						break;
 				}
 			}
@@ -114,7 +107,74 @@ namespace Example
 			public override void UpdateValue() => _value = Collider.MaxX;
 		}
 
+		private class LowerYBound : Bound
+		{
+			public LowerYBound(TCollider collider) : base(collider) { }
+
+			public override void UpdateValue() => _value = Collider.MinY;
+		}
+
+		private class UpperYBound : Bound
+		{
+			public UpperYBound(TCollider collider) : base(collider) { }
+
+			public override void UpdateValue() => _value = Collider.MaxY;
+		}
+
+		private struct OverlapPair : IEquatable<OverlapPair>
+		{
+			public TCollider A, B;
+
+			public OverlapPair(TCollider a, TCollider b)
+			{
+				A = a;
+				B = b;
+			}
+
+			public bool Equals(OverlapPair other)
+			{
+				return (ReferenceEquals(A, other.A) && ReferenceEquals(B, other.B)) ||
+					(ReferenceEquals(A, other.B) && ReferenceEquals(B, other.A));
+			}
+
+			public override int GetHashCode()
+			{
+				return A.GetHashCode() + B.GetHashCode();
+			}
+		}
+
 		private readonly List<Bound> boundsX = new List<Bound>();
-		private readonly HashSet<TCollider> activeBounds = new HashSet<TCollider>();
+		private readonly List<Bound> boundsY = new List<Bound>();
+		private readonly HashSet<OverlapPair> fullOverlaps = new HashSet<OverlapPair>();
+
+		private static void InsertIntoSorted(List<Bound> bounds, Bound bound)
+		{
+			var index = bounds.BinarySearch(bound);
+			if (index < 0) index = ~index;
+			bounds.Insert(index, bound);
+		}
+
+		/// <summary>
+		/// O(n) for a nearly sorted list
+		/// </summary>
+		private static void InsertionSort(List<Bound> axsi)
+		{
+			for (int i = 1; i < axsi.Count; i++)
+			{
+				int j = i;
+				while (j > 0)
+				{
+					if (0 < axsi[j - 1].CompareTo(axsi[j]))
+					{
+						var temp = axsi[j - 1];
+						axsi[j - 1] = axsi[j];
+						axsi[j] = temp;
+						j--;
+					}
+					else
+						break;
+				}
+			}
+		}
 	}
 }

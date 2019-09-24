@@ -58,7 +58,7 @@ namespace Example
 				for (int row = 0; row < uiGrid.Rows; ++row)
 				{
 					var count = grid[column, row].Count;
-					uiGrid[column, row] = count.ToString();
+					uiGrid[column, row] = 0 == count ? "" : count.ToString();
 				}
 			}
 		}
