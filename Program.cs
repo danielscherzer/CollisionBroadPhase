@@ -1,4 +1,5 @@
-﻿using SFML.Graphics;
+﻿using System;
+using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
@@ -16,11 +17,14 @@ namespace Example
 			window.SetKeyRepeatEnabled(false);
 			window.SetVerticalSyncEnabled(true);
 
-			var model = new Model();
-			var ui = new Ui(window, model);
+			var parameters = new Parameters();
+			var model = new Model(parameters);
+
+			var ui = new Ui(window, parameters, model);
 
 			var view = new View(model);
 			window.Resized += (_, a) => view.Resize((int)a.Width, (int)a.Height);
+			window.Resized += (_, a) => ui.Resize((int)a.Width, (int)a.Height);
 
 			window.KeyPressed += (_, a) =>
 			{

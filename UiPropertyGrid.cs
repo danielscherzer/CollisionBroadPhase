@@ -38,6 +38,8 @@ namespace Example
 			foreach (var drawable in drawables) window.Draw(drawable);
 		}
 
+		public Vector2f Size => background.Size;
+
 		public void Update()
 		{
 			foreach(var (text, property, instance) in properties)

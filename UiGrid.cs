@@ -7,6 +7,8 @@ namespace Example
 	{
 		public UiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color)
 		{
+			Position = position;
+			Size = size;
 			var font = new Font("Content/sansation.ttf");
 			var textBlueprint = new Text("", font) { FillColor = color };
 			cellTexts = new Text[columns, rows];
@@ -18,7 +20,7 @@ namespace Example
 				for (int row = 0; row < rows; ++row)
 				{
 					var text = new Text(textBlueprint);
-					text.Position = position + (0.5f + column) * deltaX + (0.5f + row) * deltaY;
+					text.Position = (0.5f + column) * deltaX + (0.5f + row) * deltaY;
 					cellTexts[column, columns - 1 - row] = text;
 				}
 
@@ -26,13 +28,13 @@ namespace Example
 			// vertical lines
 			for (int column = 0; column < columns + 1; ++column)
 			{
-				var newPosX = position + column * deltaX;
+				var newPosX = column * deltaX;
 				vertices.Append(new Vertex(newPosX, color));
 				vertices.Append(new Vertex(newPosX + new Vector2f(0f, size.Y), color));
 			}
 			for (int row = 0; row < rows + 1; ++row)
 			{
-				var newPosY = position + row * deltaY;
+				var newPosY = row * deltaY;
 				vertices.Append(new Vertex(newPosY, color));
 				vertices.Append(new Vertex(newPosY + new Vector2f(size.X, 0f), color));
 			}
@@ -65,10 +67,13 @@ namespace Example
 			target.Draw(vertices, states);
 		}
 
-		private readonly Text[,] cellTexts;
-		private readonly VertexArray vertices;
 
 		public uint Columns { get; }
 		public uint Rows { get; }
+
+		public Vector2f Size { get; private set; }
+
+		private readonly Text[,] cellTexts;
+		private readonly VertexArray vertices;
 	}
 }
