@@ -1,11 +1,11 @@
-﻿using System;
+﻿using System.Linq;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
 namespace Example
 {
-	class Program
+	static class Program
 	{
 		static void Main(string[] args)
 		{
@@ -17,12 +17,20 @@ namespace Example
 			window.SetKeyRepeatEnabled(false);
 			window.SetVerticalSyncEnabled(true);
 
-			var parameters = new Parameters();
-			var model = new Model(parameters);
+			var parameters = new CollisionParameters();
+			var scene = new SceneAdapter(2000, 0.01f, 0.002f);
+			var collisionDetection = new CollisionDetection(scene, parameters);
+			scene.OnRegeneration += (_, __) => collisionDetection.Recreate(scene);
+			Property.OnChange(() => parameters.CollisionMethod, _ => collisionDetection.Recreate(scene), false);
+			//Bind.Property(() => parameters.DebugAlgo == parameters.Freeze);
 
-			var ui = new Ui(window, parameters, model);
 
-			var view = new View(model);
+			var ui = new Ui(window, parameters, collisionDetection);
+			ui.AddPropertyGrid(scene);
+			ui.AddPropertyGrid(parameters);
+			ui.AddPropertyGrid(collisionDetection);
+
+			var view = new View();
 			window.Resized += (_, a) => view.Resize((int)a.Width, (int)a.Height);
 			window.Resized += (_, a) => ui.Resize((int)a.Width, (int)a.Height);
 
@@ -39,8 +47,9 @@ namespace Example
 			{
 				window.DispatchEvents();
 				var deltaTime = clock.Restart().AsSeconds();
-				model.Update(deltaTime);
-				view.Draw();
+				scene.Update(deltaTime);
+				collisionDetection.Update(deltaTime);
+				view.Draw(collisionDetection.GameObjects, collisionDetection.CollisionAlgoDifference.SelectMany((tuple) => new GameObject[] { tuple.Item1, tuple.Item2 }));
 
 				window.PushGLStates();
 				ui.Draw();

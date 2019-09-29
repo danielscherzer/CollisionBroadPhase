@@ -2,9 +2,9 @@
 
 namespace Example
 {
-	public class IncrementAttribute : Attribute
+	public class UiIncrementAttribute : Attribute
 	{
-		public IncrementAttribute(double value)
+		public UiIncrementAttribute(double value)
 		{
 			Value = value;
 		}

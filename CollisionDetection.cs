@@ -1,28 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
 using Zenseless.Patterns;
 
 namespace Example
 {
 	/// <summary>
-	/// Class that handles the game logic
+	/// Class that handles the collision detection
 	/// </summary>
-	internal class Model
+	internal class CollisionDetection
 	{
-		public Model(IParameters parameters)
+		public CollisionDetection(IGameObjectProvider scene, ICollisionParameters parameters)
 		{
 			this.parameters = parameters;
-			parameters.PropertyChanged += (s, e) => Change(e.PropertyName);
-			Recreate();
+			this.scene = scene;
+			Recreate(scene);
 		}
 
-		internal void Recreate()
+		internal void Recreate(IGameObjectProvider scene)
 		{
 			CollisionCount = 0;
-			scene = new Scene(parameters.ObjectCount, parameters.ObjectMinSize, parameters.ObjectSizeVariation);
 
 			var level = (int)Math.Ceiling(Math.Log(parameters.CellCount) / Math.Log(2.0));
 			CollisionMultiGrid = new CollisionMultiGrid<GameObject>(level - 1, level, -1f, -1f, 2f);
@@ -51,53 +48,46 @@ namespace Example
 
 		internal IReadOnlyList<GameObject> GameObjects => scene.GameObjects;
 
-		/// <summary>
-		/// Game logic update. Should be called once a frame: Moves all objects and resolves collision.
-		/// <param name="frameTime">Time in seconds since the last update.</param>
-		/// </summary>
 		internal void Update(float frameTime)
 		{
-			frameTime = 1f / 60f; //TODO: check constant movement delta
-			scene.Update(parameters.Freeze ? 0f : frameTime);
 			if (parameters.CollisionDetection)
 			{
 				var stopWatch = new Stopwatch();
 				stopWatch.Start();
-				var collidingSet = FindCollisions();
+				var collidingSet = FindCollisions(parameters.CollisionMethod);
 				stopWatch.Stop();
+
 				collisionTime.NewSample(stopWatch.Elapsed.TotalMilliseconds);
 				CollisionTimeMsec = (float)Math.Round(collisionTime.SmoothedValue, 2);
 				foreach (var (collider1, collider2) in collidingSet)
 				{
-					HandleCollision(collider1, collider2);
-					HandleCollision(collider2, collider1);
+					collider1.HandleCollision(collider2);
+					collider2.HandleCollision(collider1);
 				}
 				CollisionCount = collidingSet.Count;
+
+				if (parameters.DebugAlgo)
+				{
+					var diff = new HashSet<(GameObject, GameObject)>(GridCollision());
+					diff.SymmetricExceptWith(collidingSet);
+					CollisionAlgoDifference = diff;
+				}
 			}
 		}
 
-		private IParameters parameters;
+		private ICollisionParameters parameters;
 		private ExponentialSmoothing collisionTime = new ExponentialSmoothing(0.01);
-		private Scene scene;
-
-		private void Change(string propertyName)
-		{
-			var lightParams = new string[] { nameof(parameters.Freeze), nameof(parameters.CollisionDetection) };
-			if (!lightParams.Contains(propertyName))
-			{
-				Recreate();
-			}
-		}
+		private IGameObjectProvider scene;
 
 		internal CollisionGrid<GameObject> CollisionGrid { get; private set; }
 		internal CollisionMultiGrid<GameObject> CollisionMultiGrid { get; private set; }
 		private CollisionSAP<GameObject> CollisionSAP { get; } = new CollisionSAP<GameObject>();
 		private CollisionPersistentSAP<GameObject> CollisionPersistentSAP { get; } = new CollisionPersistentSAP<GameObject>();
 
-		private IReadOnlyCollection<(GameObject, GameObject)> FindCollisions()
+		private IReadOnlyCollection<(GameObject, GameObject)> FindCollisions(CollisionMethodTypes type)
 		{
 			HashSet<(GameObject, GameObject)> result;
-			switch (parameters.CollisionMethod)
+			switch (type)
 			{
 				case CollisionMethodTypes.BruteForce: result = BruteForceCollision(); break;
 				case CollisionMethodTypes.Grid: result = GridCollision(); break;
@@ -106,27 +96,22 @@ namespace Example
 				case CollisionMethodTypes.PersistentSAP: result = PersistentSAPCollision(); break;
 				default: result = new HashSet<(GameObject, GameObject)>(); break;
 			}
-			if (!parameters.DebugAlgo) return result;
-
-			var diff = new HashSet<(GameObject, GameObject)>(GridCollision());
-			diff.SymmetricExceptWith(result);
-			CollisionAlgoDifference = diff;
 			return result;
 		}
 
 		private HashSet<(GameObject, GameObject)> BruteForceCollision()
 		{
 			// a data structure that holds only distinct elements
-			var collidingSet = new HashSet<(GameObject, GameObject)>();
+			var collisions = new HashSet<(GameObject, GameObject)>();
 			//Check all game objects for collision with any other game object. And add each colliding game object to the colliding set.
 			for (int i = 0; i + 1 < GameObjects.Count; ++i)
 			{
 				for (int j = i + 1; j < GameObjects.Count; ++j)
 				{
-					TestForCollision(collidingSet, GameObjects[i], GameObjects[j]);
+					TestForCollision(collisions, GameObjects[i], GameObjects[j]);
 				}
 			}
-			return collidingSet;
+			return collisions;
 		}
 
 		private static void TestForCollision(HashSet<(GameObject, GameObject)> collidingSet, GameObject a, GameObject b)
@@ -157,7 +142,7 @@ namespace Example
 				CollisionMultiGrid.Add(gameObject);
 			}
 			var collisions = new HashSet<(GameObject, GameObject)>();
-			CollisionMultiGrid.FindCollision((a, b) => TestForCollision(collisions, a, b));
+			CollisionMultiGrid.FindAllCollisions((a, b) => TestForCollision(collisions, a, b));
 			return collisions;
 		}
 
@@ -175,12 +160,6 @@ namespace Example
 			var collisions = new HashSet<(GameObject, GameObject)>();
 			CollisionSAP.FindAllCollisions((a, b) => TestForCollision(collisions, a, b));
 			return collisions;
-		}
-
-		private static void HandleCollision(GameObject a, GameObject b)
-		{
-			var diff = a.Center - b.Center;
-			a.Velocity = Vector2.Normalize(diff) * a.Velocity.Length();
 		}
 	}
 }

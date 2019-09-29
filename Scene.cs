@@ -8,9 +8,15 @@ namespace Example
 	{
 		public Scene(int objectCount, float objectMinSize, float objectSizeVariation)
 		{
-			GameObject NewAsteroid(float radius, Vector2 center) => new GameObject(center.X, center.Y, radius);
+			randomNumber = new Random(12);
+			while (gameObjects.Count < objectCount)
+			{
+				gameObjects.Add(CreateAsteroid(objectMinSize, objectSizeVariation));
+			}
+		}
 
-			var randomNumber = new Random(12);
+		private GameObject CreateAsteroid(float objectMinSize, float objectSizeVariation)
+		{
 			Vector2 RandomVector()
 			{
 				var x = randomNumber.NextDouble() * 2 - 1;
@@ -18,17 +24,17 @@ namespace Example
 				return new Vector2((float)x, (float)y);
 			}
 
-			while (gameObjects.Count < objectCount)
+			var center = RandomVector();
+			var radius = (float)randomNumber.NextDouble();
+			radius = MathF.Pow(radius, 8f); // more small ones than big ones
+			radius = radius * objectSizeVariation + objectMinSize;
+			var newAsteroid = new GameObject(center.X, center.Y, radius)
 			{
-				var center = RandomVector();
-				var radius = (float)randomNumber.NextDouble();
-				radius = MathF.Pow(radius, 8f); // more small ones than big ones
-				radius = radius * objectSizeVariation + objectMinSize;
-				var newAsteroid = NewAsteroid(radius, center);
-				newAsteroid.Velocity = 0.1f * RandomVector();
-				gameObjects.Add(newAsteroid);
-			}
+				Velocity = 0.1f * RandomVector()
+			};
+			return newAsteroid;
 		}
+
 		public IReadOnlyList<GameObject> GameObjects => gameObjects;
 
 		/// <summary>
@@ -44,5 +50,6 @@ namespace Example
 		}
 
 		private List<GameObject> gameObjects = new List<GameObject>();
+		private readonly Random randomNumber;
 	}
 }

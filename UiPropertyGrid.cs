@@ -38,6 +38,7 @@ namespace Example
 			foreach (var drawable in drawables) window.Draw(drawable);
 		}
 
+		public Vector2f Position => background.Position;
 		public Vector2f Size => background.Size;
 
 		public void Update()
@@ -57,7 +58,8 @@ namespace Example
 
 		private void AddProperties(object obj)
 		{
-			var properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.CanRead);
+			var properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
+				.Where(p => p.CanRead && p.GetCustomAttribute<UiIgnoreAttribute>() is null);
 			var position = textBlueprint.Position;
 			foreach (var property in properties)
 			{
@@ -117,7 +119,7 @@ namespace Example
 					var value = property.GetValue(instance);
 					var setMethod = property.GetSetMethod();
 					if (setMethod is null) continue;
-					var increment = property.GetCustomAttributes<IncrementAttribute>().Select(attr => attr.Value).Append(1.0).First();
+					var increment = property.GetCustomAttributes<UiIncrementAttribute>().Select(attr => attr.Value).Append(1.0).First();
 					increment = e.Button == Mouse.Button.Left ? increment : -increment;
 					switch (value)
 					{

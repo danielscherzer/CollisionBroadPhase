@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 	using System.Numerics;
 
-	public class CollisionGrid<TCollider> where TCollider : class
+	public class CollisionGrid<TCollider> : ICollisionMethodBroadPhase<TCollider> where TCollider : IBox2DCollider
 	{
 		public int CellCountX { get; }
 		public int CellCountY { get; }
@@ -31,22 +31,21 @@
 			CellCountY = cellCountY;
 		}
 
-		public void Add(IBox2DCollider objectBounds)
+		public void Add(TCollider collider)
 		{
 			// Convert the object's AABB to integer grid coordinates.
 			// Objects outside of the grid are clamped to the edge.
-			int minX = Math.Max((int)Math.Floor((objectBounds.MinX - MinX) / CellSize.X), 0);
-			int maxX = Math.Min((int)Math.Floor((objectBounds.MaxX - MinX) / CellSize.X), CellCountX - 1);
-			int minY = Math.Max((int)Math.Floor((objectBounds.MinY - MinY) / CellSize.Y), 0);
-			int maxY = Math.Min((int)Math.Floor((objectBounds.MaxY - MinY) / CellSize.Y), CellCountY - 1);
+			int minX = Math.Max((int)Math.Floor((collider.MinX - MinX) / CellSize.X), 0);
+			int maxX = Math.Min((int)Math.Floor((collider.MaxX - MinX) / CellSize.X), CellCountX - 1);
+			int minY = Math.Max((int)Math.Floor((collider.MinY - MinY) / CellSize.Y), 0);
+			int maxY = Math.Min((int)Math.Floor((collider.MaxY - MinY) / CellSize.Y), CellCountY - 1);
 
-			var obj = objectBounds as TCollider;
 			// Loop over the cells the object overlaps and insert the object into each.
 			for (int y = minY; y <= maxY; ++y)
 			{
 				for (int x = minX; x <= maxX; ++x)
 				{
-					cells[x, y].Add(obj);
+					cells[x, y].Add(collider);
 				}
 			}
 		}

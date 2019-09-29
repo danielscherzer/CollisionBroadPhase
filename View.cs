@@ -10,11 +10,11 @@ namespace Example
 	/// </summary>
 	internal class View
 	{
-		public View(Model model)
+		public View()
 		{
 			GL.ClearColor(Color.Black);
 			var asteroidPoints = CreateAsteroidPoints();
-			count = asteroidPoints.Count;
+			asteroidVertexCount = asteroidPoints.Count;
 			var array = asteroidPoints.ToArray(); //create an array (data is guarantied to be consecutive in memory
 			int byteSize = Vector2.SizeInBytes * array.Length; // calculate size in bytes of circle points
 
@@ -33,7 +33,6 @@ namespace Example
 			GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 0, 0); // specify what our buffer contains
 			GL.BindVertexArray(0); // deactivate vertex array; state storing is stopped;
 			GL.BindBuffer(BufferTarget.ArrayBuffer, 0); // deactivate buffer; just to be on the cautious side;
-			this.model = model ?? throw new ArgumentNullException(nameof(model));
 		}
 
 		/// <summary>
@@ -44,9 +43,8 @@ namespace Example
 			GL.Viewport(0, 0, width, height); // tell OpenGL to use the whole window for drawing
 		}
 
-		internal void Draw()
+		internal void Draw(IEnumerable<GameObject> gameObjects, IEnumerable<GameObject> errors)
 		{
-			var gameObjects = model.GameObjects;
 			GL.Clear(ClearBufferMask.ColorBufferBit);
 			GL.Color3(Color.Gray);
 			GL.BindVertexArray(vertexArray); // activate vertex array
@@ -60,17 +58,15 @@ namespace Example
 				DrawAsteroid(asteroid.Center, asteroid.Radius, PrimitiveType.LineLoop);
 			}
 			GL.Color3(Color.Red);
-			foreach (var (asteroid1, asteroid2) in model.CollisionAlgoDifference)
+			foreach (var error in errors)
 			{
-				DrawAsteroid(asteroid1.Center, asteroid1.Radius, PrimitiveType.LineLoop);
-				DrawAsteroid(asteroid2.Center, asteroid2.Radius, PrimitiveType.LineLoop);
+				DrawAsteroid(error.Center, error.Radius, PrimitiveType.LineLoop);
 			}
 			GL.BindVertexArray(0); // deactivate vertex array
 		}
 
 		private readonly int vertexArray;
-		private readonly int count;
-		private readonly Model model;
+		private readonly int asteroidVertexCount;
 
 		/// <summary>
 		/// Creates points along a circle, but for each point the radius of the circle is varied by a random variable.
@@ -101,11 +97,11 @@ namespace Example
 			GL.PushMatrix();
 			GL.Translate(center.X, center.Y, 0f);
 			GL.Scale(radius, radius, radius);
-			GL.DrawArrays(primitiveType, 0, count); // draw with vertex array data
+			GL.DrawArrays(primitiveType, 0, asteroidVertexCount); // draw with vertex array data
 			GL.PopMatrix();
 		}
 
-		private void DrawQuad(Vector2 center, float radius)
+		private static void DrawQuad(Vector2 center, float radius)
 		{
 			GL.Begin(PrimitiveType.Quads);
 			GL.Vertex2(center + new Vector2(-radius, -radius));

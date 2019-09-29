@@ -11,7 +11,7 @@ namespace Example
 	/// If built iteratively: fast if little movement (insertion sorting fast), degenerates with more movement (more sorting)
 	/// Do not add/delete GameObjects without adding/removing them from the SAP structure too!
 	/// </summary>
-	public class CollisionPersistentSAP<TCollider> where TCollider : IBox2DCollider
+	public class CollisionPersistentSAP<TCollider> : ICollisionMethodBroadPhase<TCollider> where TCollider : IBox2DCollider
 	{
 		int newlyAdded = 0;
 		public void Add(TCollider objectBounds)
@@ -43,7 +43,7 @@ namespace Example
 			}
 		}
 
-		internal void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
+		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
 			if (1000 < newlyAdded)
 			{

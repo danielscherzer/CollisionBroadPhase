@@ -14,7 +14,7 @@ namespace Example
 	/// Please note that Game Gems article contains an error in what neighbors have to be traversed (see code below for details)
 	/// Not 3, but 4 neighbors have to be traversed!
 	/// </summary>
-	class CollisionMultiGrid<TCollider> where TCollider : class
+	class CollisionMultiGrid<TCollider> : ICollisionMethodBroadPhase<TCollider> where TCollider : ICircle2dCollider
 	{
 		public CollisionMultiGrid(int minLevel, int maxLevel, float minX, float minY, float size)
 		{
@@ -47,7 +47,7 @@ namespace Example
 		public float MinY { get; }
 		public float Size { get; }
 
-		public void Add(ICircle2dCollider collider)
+		public void Add(TCollider collider)
 		{
 			void AddToGridLevel(List<TCollider>[,] grid)
 			{
@@ -58,7 +58,7 @@ namespace Example
 				//calculate grid column and row
 				var column = Math.Clamp((int)(unitX * columns), 0, columns - 1);
 				var row = Math.Clamp((int)(unitY * rows), 0, rows - 1);
-				grid[column, row].Add(collider as TCollider);
+				grid[column, row].Add(collider);
 			}
 
 			// find highest multiGrid level with cell size >= object size
@@ -87,7 +87,7 @@ namespace Example
 			}
 		}
 
-		public void FindCollision(Action<TCollider, TCollider> collisionHandler)
+		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
 			// from smallest objects to largest objects
 			for (int level = MaxLevel; level >= MinLevel; --level)

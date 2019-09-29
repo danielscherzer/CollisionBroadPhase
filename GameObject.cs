@@ -6,7 +6,7 @@ namespace Example
 	/// <summary>
 	/// Base class for all game objects. It uses a circle based intersection test.
 	/// </summary>
-	internal class GameObject : ICircle2dCollider, IBox2DCollider
+	public class GameObject : ICircle2dCollider, IBox2DCollider
 	{
 		public GameObject(float centerX, float centerY, float radius)
 		{
@@ -32,19 +32,25 @@ namespace Example
 
 		public float MaxY => CenterY + Radius;
 
+		public void HandleCollision(GameObject other)
+		{
+			var diff = Center - other.Center;
+			Velocity = Vector2.Normalize(diff) * Velocity.Length();
+		}
+
 		/// <summary>
 		/// Responsible for moving the game object. Should be called once a frame.
 		/// <param name="frameTime">Time in seconds since the last update.</param>
 		/// </summary>
 		public virtual void Update(float frameTime)
 		{
-			Center += frameTime * Velocity;
+			var abs = Vector2.Abs(Center);
 			//bounce off window edges
-			if (Math.Abs(Center.X) > 1 || Math.Abs(Center.Y) > 1)
+			if (abs.X > 1f || abs.Y > 1f)
 			{
 				Velocity = -Velocity;
-				Update(frameTime);
 			}
+			Center += frameTime * Velocity;
 		}
 	}
 }

@@ -1,20 +1,17 @@
 ﻿using SFML.Graphics;
 using SFML.System;
-using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Example
 {
 	class Ui
 	{
-		public Ui(RenderWindow window, IParameters parameters, Model model)
+		public Ui(RenderWindow window, ICollisionParameters parameters, CollisionDetection model)
 		{
 			this.window = window;
 			this.parameters = parameters;
 			this.model = model;
-			
-			uiPropertyGridModel = new UiPropertyGrid(window, new Vector2f(window.Size.X - 500, 10), model);
-			uiPropertyGridParams = new UiPropertyGrid(window, new Vector2f(10, 10), parameters);
 
 			var collMultiGrid = model.CollisionMultiGrid;
 			var colors = new Color[] { Color.White, Color.Blue, Color.Yellow , Color.Green, Color.Magenta, Color.Red };
@@ -22,9 +19,16 @@ namespace Example
 			{
 				var gridLevel = collMultiGrid.GetGridLevel(level);
 				var color = colors[colorId % colors.Length];
-				uiGrids.Add(level, new UiGrid((uint)gridLevel.GetLength(0), (uint)gridLevel.GetLength(1), new Vector2f(10, 0), (Vector2f)window.Size, color));
+				uiGrids.Add(level, new UiGrid((uint)gridLevel.GetLength(0), (uint)gridLevel.GetLength(1), new Vector2f(0, 0), (Vector2f)window.Size, color));
 			}
 			uiGrid = new UiGrid((uint)model.CollisionGrid.CellCountX, (uint)model.CollisionGrid.CellCountY, new Vector2f(0, 0), (Vector2f)window.Size, Color.White);
+		}
+
+		public void AddPropertyGrid(object obj)
+		{
+			var last = propertyGrids.LastOrDefault();
+			var y = last is null ? 10 : last.Position.Y + last.Size.Y + 10;
+			propertyGrids.Add(new UiPropertyGrid(window, new Vector2f(10, y), obj));
 		}
 
 		internal void Resize(int width, int height)
@@ -49,17 +53,17 @@ namespace Example
 				default:
 					break;
 			}
-			uiPropertyGridModel.Update();
-			uiPropertyGridModel.Draw();
-			uiPropertyGridParams.Update();
-			uiPropertyGridParams.Draw();
+			foreach(var propertyGrid in propertyGrids)
+			{
+				propertyGrid.Update();
+				propertyGrid.Draw();
+			}
 		}
 
 		private RenderWindow window;
-		private readonly IParameters parameters;
-		private Model model;
-		private readonly UiPropertyGrid uiPropertyGridModel;
-		private readonly UiPropertyGrid uiPropertyGridParams;
+		private readonly ICollisionParameters parameters;
+		private CollisionDetection model;
+		private List<UiPropertyGrid> propertyGrids = new List<UiPropertyGrid>();
 		private readonly UiGrid uiGrid;
 		private readonly Dictionary<int, UiGrid> uiGrids = new Dictionary<int, UiGrid>();
 
