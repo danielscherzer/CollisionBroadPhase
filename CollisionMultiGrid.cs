@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Example
 {
@@ -102,6 +103,8 @@ namespace Example
 				}
 			}
 		}
+
+		public IEnumerable<IReadOnlyList<TCollider>[,]> Grids => multiGrid.Select(level => level.Item2);
 
 		public IReadOnlyList<TCollider>[,] GetGridLevel(int level) => multiGrid[level - MinLevel].Item2;
 

@@ -38,7 +38,7 @@ namespace Example
 			set => SetNotify(ref _objectMinSize, value, _ => Regenerate());
 		}
 
-		[UiIncrement(0.001f)]
+		[UiIncrement(0.003f)]
 		public float ObjectSizeVariation
 		{
 			get => _objectSizeVariation;
@@ -50,6 +50,7 @@ namespace Example
 		public void Update(float frameTime)
 		{
 			frameTime = Freeze ? 0f : frameTime;
+			if (frameTime > 1f / 10f) frameTime = 1f / 20f;
 			_immutableScene.Update(frameTime);
 		}
 

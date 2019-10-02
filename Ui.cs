@@ -1,34 +1,55 @@
 ﻿using SFML.Graphics;
 using SFML.System;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using Zenseless.Patterns;
 
 namespace Example
 {
-	class Ui
+	class Ui : Disposable
 	{
-		public Ui(RenderWindow window, ICollisionParameters parameters, CollisionDetection model)
+		public Ui(RenderWindow window, CollisionDetection model)
 		{
+			font = new Font("Content/sansation.ttf");
 			this.window = window;
-			this.parameters = parameters;
-			this.model = model;
-
-			var collMultiGrid = model.CollisionMultiGrid;
-			var colors = new Color[] { Color.White, Color.Blue, Color.Yellow , Color.Green, Color.Magenta, Color.Red };
-			for(int level = collMultiGrid.MaxLevel, colorId = 0; level >= collMultiGrid.MinLevel; --level, ++colorId)
+			
+			switch (model.CollisionMethod)
 			{
-				var gridLevel = collMultiGrid.GetGridLevel(level);
-				var color = colors[colorId % colors.Length];
-				uiGrids.Add(level, new UiGrid((uint)gridLevel.GetLength(0), (uint)gridLevel.GetLength(1), new Vector2f(0, 0), (Vector2f)window.Size, color));
+				case CollisionMultiGrid<GameObject> collisionMethod:
+					var colors = new Color[] { Color.White, Color.Blue, Color.Yellow, Color.Green, Color.Magenta, Color.Red };
+					for (int level = collisionMethod.MaxLevel, colorId = 0; level >= collisionMethod.MinLevel; --level, ++colorId)
+					{
+						var gridLevel = collisionMethod.GetGridLevel(level);
+						var color = colors[colorId % colors.Length];
+						var uiGrid = new PullUiGrid((uint)gridLevel.GetLength(0), (uint)gridLevel.GetLength(1)
+							, new Vector2f(0, 0), (Vector2f)window.Size, color, font
+							, (col, row) => GetCellString(gridLevel, col, row));
+
+						drawables.Add(uiGrid);
+					}
+					break;
+				case CollisionGrid<GameObject> collisionMethod:
+					var grid = new PullUiGrid((uint)collisionMethod.CellCountX, (uint)collisionMethod.CellCountY
+						, new Vector2f(0, 0), (Vector2f)window.Size, Color.White
+						, font, (col, row) => GetCellString(collisionMethod.GetGrid(), col, row));
+					drawables.Add(grid);
+					break;
+				default:
+					break;
 			}
-			uiGrid = new UiGrid((uint)model.CollisionGrid.CellCountX, (uint)model.CollisionGrid.CellCountY, new Vector2f(0, 0), (Vector2f)window.Size, Color.White);
 		}
 
 		public void AddPropertyGrid(object obj)
 		{
-			var last = propertyGrids.LastOrDefault();
-			var y = last is null ? 10 : last.Position.Y + last.Size.Y + 10;
-			propertyGrids.Add(new UiPropertyGrid(window, new Vector2f(10, y), obj));
+			var propGrid = new UiPropertyGrid(window, new Vector2f(10, currentY + 10), font);
+			propGrid.AddProperties(obj);
+			drawables.Add(propGrid);
+			currentY = propGrid.Position.Y + propGrid.Size.Y;
+		}
+
+		public void Clear()
+		{
+			drawables.Clear();
 		}
 
 		internal void Resize(int width, int height)
@@ -37,46 +58,30 @@ namespace Example
 
 		public void Draw()
 		{
-			switch(parameters.CollisionMethod)
+			foreach(var drawable in drawables)
 			{
-				case CollisionMethodTypes.MultiGrid:
-					foreach (var (level, uiGrid) in uiGrids)
-					{
-						UpdateGrid(uiGrid, model.CollisionMultiGrid.GetGridLevel(level));
-						window.Draw(uiGrid);
-					}
-					break;
-				case CollisionMethodTypes.Grid:
-					UpdateGrid(uiGrid, model.CollisionGrid.GetGrid());
-					window.Draw(uiGrid);
-					break;
-				default:
-					break;
-			}
-			foreach(var propertyGrid in propertyGrids)
-			{
-				propertyGrid.Update();
-				propertyGrid.Draw();
+				window.Draw(drawable);
 			}
 		}
 
-		private RenderWindow window;
-		private readonly ICollisionParameters parameters;
-		private CollisionDetection model;
-		private List<UiPropertyGrid> propertyGrids = new List<UiPropertyGrid>();
-		private readonly UiGrid uiGrid;
-		private readonly Dictionary<int, UiGrid> uiGrids = new Dictionary<int, UiGrid>();
-
-		private void UpdateGrid(UiGrid uiGrid, IReadOnlyList<GameObject>[,] grid)
+		protected override void DisposeResources()
 		{
-			for (int column = 0; column < uiGrid.Columns; ++column)
+			foreach (var drawable in drawables)
 			{
-				for (int row = 0; row < uiGrid.Rows; ++row)
-				{
-					var count = grid[column, row].Count;
-					uiGrid[column, row] = 0 == count ? "" : count.ToString();
-				}
+				(drawable as IDisposable)?.Dispose();
 			}
+			font.Dispose();
+		}
+
+		private float currentY = 0f;
+		private readonly Font font;
+		private RenderWindow window;
+		private List<Drawable> drawables = new List<Drawable>();
+
+		private string GetCellString(IReadOnlyList<object>[,] grid, int column, int row)
+		{
+			var count = grid[column, row].Count;
+			return 0 == count ? "" : count.ToString();
 		}
 	}
 }

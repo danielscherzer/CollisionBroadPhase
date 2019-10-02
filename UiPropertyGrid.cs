@@ -5,12 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Zenseless.Patterns;
 
 namespace Example
 {
-	class UiPropertyGrid
+	class UiPropertyGrid : Disposable, Drawable, IRectangleShape
 	{
-		public UiPropertyGrid(RenderWindow window, Vector2f position, object obj)
+		public UiPropertyGrid(RenderWindow window, Vector2f position, Font font)
 		{
 			window.MouseButtonReleased += Window_MouseButtonReleased;
 			window.KeyReleased += Window_KeyReleased;
@@ -23,40 +24,14 @@ namespace Example
 				OutlineThickness = 3,
 				Position = position,
 			};
-			var font = new Font("Content/sansation.ttf");
 			textBlueprint = new Text("test", font)
 			{
 				LineSpacing = 1.2f,
-				Position = background.Position + new Vector2f( border, border),
+				Position = background.Position + new Vector2f(border, border),
 			};
-			AddProperties(obj);
 		}
 
-		public void Draw()
-		{
-			window.Draw(background);
-			foreach (var drawable in drawables) window.Draw(drawable);
-		}
-
-		public Vector2f Position => background.Position;
-		public Vector2f Size => background.Size;
-
-		public void Update()
-		{
-			foreach(var (text, property, instance) in properties)
-			{
-				text.DisplayedString = property.GetValue(instance)?.ToString();
-			}
-		}
-
-		private readonly float border;
-		private readonly Text textBlueprint;
-		private readonly RectangleShape background;
-		private readonly RenderWindow window;
-		private readonly List<Drawable> drawables = new List<Drawable>();
-		private readonly List<(Text, PropertyInfo, object)> properties = new List<(Text, PropertyInfo, object)>();
-
-		private void AddProperties(object obj)
+		public void AddProperties(object obj)
 		{
 			var properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
 				.Where(p => p.CanRead && p.GetCustomAttribute<UiIgnoreAttribute>() is null);
@@ -66,7 +41,7 @@ namespace Example
 				var text = new Text(textBlueprint) { DisplayedString = property.Name };
 				text.Position = position;
 				position.Y += text.CharacterSize * text.LineSpacing;
-				drawables.Add(text);
+				texts.Add(text);
 				ExpandBackground(text.GetGlobalBounds());
 			}
 			background.Size += 2f * new Vector2f(border, border);
@@ -81,11 +56,42 @@ namespace Example
 				}
 				text.Position = position;
 				position.Y += text.CharacterSize * text.LineSpacing;
-				drawables.Add(text);
+				texts.Add(text);
 				this.properties.Add((text, property, obj));
 				ExpandBackground(text.GetGlobalBounds());
 			}
 		}
+
+		public void Draw(RenderTarget target, RenderStates states)
+		{
+			Update();
+			target.Draw(background, states);
+			foreach (var drawable in texts) target.Draw(drawable, states);
+		}
+
+		public Vector2f Position => background.Position;
+		public Vector2f Size => background.Size;
+
+		protected override void DisposeResources()
+		{
+			window.MouseButtonReleased -= Window_MouseButtonReleased;
+			window.KeyReleased -= Window_KeyReleased;
+			properties.Clear();
+			foreach (var text in texts)
+			{
+				text.Dispose();
+			}
+			texts.Clear();
+			textBlueprint.Dispose();
+			background.Dispose();
+		}
+
+		private readonly float border;
+		private readonly Text textBlueprint;
+		private readonly RectangleShape background;
+		private readonly RenderWindow window;
+		private readonly List<Text> texts = new List<Text>();
+		private readonly List<(Text, PropertyInfo, object)> properties = new List<(Text, PropertyInfo, object)>();
 
 		private void ExpandBackground(FloatRect bounds)
 		{
@@ -104,6 +110,15 @@ namespace Example
 			return new FloatRect(left, top, right - left, bottom - top);
 		}
 
+		private void Update()
+		{
+			foreach (var (text, property, instance) in properties)
+			{
+				text.DisplayedString = property.GetValue(instance)?.ToString();
+				ExpandBackground(text.GetGlobalBounds());
+			}
+		}
+
 		private void Window_KeyReleased(object sender, KeyEventArgs e)
 		{
 		}
@@ -111,57 +126,51 @@ namespace Example
 		private void Window_MouseButtonReleased(object sender, MouseButtonEventArgs e)
 		{
 			if (!background.GetGlobalBounds().Contains(e.X, e.Y)) return;
-			foreach (var (text, property, instance) in properties)
+			(PropertyInfo property, object instance) = GetClickedProperty(e.X, e.Y); // do this first because value change could call this.Dispose()
+			if (property is null) return;
+			var value = property.GetValue(instance);
+			var increment = property.GetCustomAttributes<UiIncrementAttribute>().Select(attr => attr.Value).Append(1.0).First();
+			increment = e.Button == Mouse.Button.Left ? increment : -increment;
+			switch (value)
 			{
-				if (!property.CanWrite) continue;
-				if (text.GetGlobalBounds().Contains(e.X, e.Y))
-				{
-					var value = property.GetValue(instance);
-					var setMethod = property.GetSetMethod();
-					if (setMethod is null) continue;
-					var increment = property.GetCustomAttributes<UiIncrementAttribute>().Select(attr => attr.Value).Append(1.0).First();
-					increment = e.Button == Mouse.Button.Left ? increment : -increment;
-					switch (value)
-					{
-						case bool boolValue:
-							property.SetValue(instance, !boolValue);
-							InvalidateBackgroundSize();
-							break;
-						case Enum enumValue:
-							var possibleValues = Enum.GetValues(enumValue.GetType());
-							var maxVal = possibleValues.Length - 1;
-							var val = Convert.ToInt32(enumValue);
-							val += (int)increment;
-							property.SetValue(instance, Math.Clamp(val, 0, maxVal));
-							InvalidateBackgroundSize();
-							break;
-						case int intValue:
-							intValue += (int)increment;
-							property.SetValue(instance, intValue);
-							InvalidateBackgroundSize();
-							break;
-						case uint uintValue:
-							uintValue = (uint)((int)uintValue + increment);
-							property.SetValue(instance, uintValue);
-							InvalidateBackgroundSize();
-							break;
-						case float floatValue:
-							floatValue += (float)increment;
-							property.SetValue(instance, floatValue);
-							InvalidateBackgroundSize();
-							break;
-					}
-				}
+				case bool boolValue:
+					property.SetValue(instance, !boolValue);
+					break;
+				case Enum enumValue:
+					var possibleValues = Enum.GetValues(enumValue.GetType());
+					var maxVal = possibleValues.Length - 1;
+					var val = Convert.ToInt32(enumValue);
+					val += (int)increment;
+					property.SetValue(instance, Math.Clamp(val, 0, maxVal));
+					break;
+				case int intValue:
+					intValue += (int)increment;
+					property.SetValue(instance, intValue);
+					break;
+				case uint uintValue:
+					uintValue = (uint)((int)uintValue + increment);
+					property.SetValue(instance, uintValue);
+					break;
+				case float floatValue:
+					floatValue += (float)increment;
+					property.SetValue(instance, floatValue);
+					break;
 			}
 		}
 
-		private void InvalidateBackgroundSize()
+		private (PropertyInfo, object) GetClickedProperty(int x, int y)
 		{
 			foreach (var (text, property, instance) in properties)
 			{
-				text.DisplayedString = property.GetValue(instance)?.ToString();
-				ExpandBackground(text.GetGlobalBounds());
+				if (!property.CanWrite) continue;
+				if (text.GetGlobalBounds().Contains(x, y))
+				{
+					var setMethod = property.GetSetMethod();
+					if (setMethod is null) continue;
+					return (property, instance);
+				}
 			}
+			return (null, null);
 		}
 	}
 }

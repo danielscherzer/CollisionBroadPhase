@@ -3,13 +3,12 @@ using SFML.System;
 
 namespace Example
 {
-	class UiGrid : Transformable, Drawable
+	class UiGrid : Transformable, Drawable, IRectangleShape
 	{
-		public UiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color)
+		public UiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color, Font font)
 		{
 			Position = position;
 			Size = size;
-			var font = new Font("Content/sansation.ttf");
 			var textBlueprint = new Text("", font) { FillColor = color };
 			cellTexts = new Text[columns, rows];
 			vertices = new VertexArray(PrimitiveType.Lines);
@@ -67,11 +66,20 @@ namespace Example
 			target.Draw(vertices, states);
 		}
 
-
 		public uint Columns { get; }
 		public uint Rows { get; }
 
 		public Vector2f Size { get; private set; }
+
+		protected override void Destroy(bool disposing)
+		{
+			base.Destroy(disposing);
+			vertices.Dispose();
+			foreach(var text in cellTexts)
+			{
+				text.Dispose();
+			}
+		}
 
 		private readonly Text[,] cellTexts;
 		private readonly VertexArray vertices;

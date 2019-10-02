@@ -27,7 +27,7 @@ namespace Example
 			fullOverlaps.Clear();
 		}
 
-		internal void UpdateBounds()
+		private void UpdateBounds()
 		{
 			foreach(var bound in boundsX)
 			{
@@ -44,10 +44,8 @@ namespace Example
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
+			UpdateBounds();
 			var activeBounds = new HashSet<TCollider>();
-			//var debug = new List<int>();
-			//activeBounds.Clear();
-			//TODO: find active pairs (do we need a second boundsY list?)
 			foreach(var bound in boundsX)
 			{
 				switch(bound)
@@ -60,7 +58,6 @@ namespace Example
 						// this collider has ended -> remove from active list
 						var colliderA = bound.Collider;
 						activeBounds.Remove(colliderA);
-	//					debug.Add(activeBounds.Count);
 						// check for collision with all on active list
 						foreach (var colliderB in activeBounds)
 						{

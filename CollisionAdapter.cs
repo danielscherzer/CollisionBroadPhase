@@ -1,14 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Zenseless.Patterns;
+﻿using Zenseless.Patterns;
 
 namespace Example
 {
-	class CollisionParameters : NotifyPropertyChanged, ICollisionParameters
+	class CollisionAdapter : NotifyPropertyChanged, ICollisionParameters
 	{
+		public CollisionAdapter(IGameObjectProvider scene)
+		{
+			//collisionDetection = new CollisionDetection(scene);
+		}
+
 		[UiIncrement(8)]
-		public int CellCount
+		public int CellCount //TODO: react to change
 		{
 			get => _cellCount;
 			set => SetNotify(ref _cellCount, value);
@@ -30,12 +32,6 @@ namespace Example
 		{
 			get => _debugAlgo;
 			set => SetNotify(ref _debugAlgo, value);
-		}
-
-		protected new void SetNotify<TYPE>(ref TYPE valueBackend, TYPE value, Action<TYPE> action = null, [CallerMemberName] string memberName = "")
-		{
-			if (EqualityComparer<TYPE>.Default.Equals(valueBackend, value)) return;
-			base.SetNotify(ref valueBackend, value, action, memberName);
 		}
 
 		private bool _collisionDetection = true;

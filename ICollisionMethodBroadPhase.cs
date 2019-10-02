@@ -4,7 +4,7 @@ namespace Example
 {
 	public interface ICollisionMethodBroadPhase<TCollider>
 	{
-//		void Add(IBox2DCollider objectBounds);
+		void Add(TCollider collider);
 		void Clear();
 		void FindAllCollisions(Action<TCollider, TCollider> collisionHandler);
 	}

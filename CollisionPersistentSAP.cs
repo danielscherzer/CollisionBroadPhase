@@ -30,7 +30,7 @@ namespace Example
 			fullOverlaps.Clear();
 		}
 
-		internal void UpdateBounds()
+		private void UpdateBounds()
 		{
 			foreach (var bound in boundsX)
 			{
@@ -45,6 +45,7 @@ namespace Example
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
+			UpdateBounds();
 			if (1000 < newlyAdded)
 			{
 				fullOverlaps.Clear();
