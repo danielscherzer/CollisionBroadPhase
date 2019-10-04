@@ -33,6 +33,7 @@ namespace Example
 			var properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
 				.Where(p => p.CanRead && p.GetCustomAttribute<UiIgnoreAttribute>() is null);
 			var position = textBlueprint.Position;
+			//labels
 			foreach (var property in properties)
 			{
 				var text = new Text(textBlueprint) { DisplayedString = property.Name };
@@ -44,6 +45,7 @@ namespace Example
 			background.Size += 2f * new Vector2f(border, border);
 			position = textBlueprint.Position;
 			position.X = background.Position.X + background.Size.X;
+			//values
 			foreach (var property in properties)
 			{
 				var text = new Text(textBlueprint) { DisplayedString = property.GetValue(obj)?.ToString() };
@@ -113,14 +115,16 @@ namespace Example
 			}
 		}
 
-		public bool ChangeValueAt(int x, int y, bool increment)
+		public bool ChangeValueAt(int x, int y, bool invert)
 		{
 			if (!background.GetGlobalBounds().Contains(x, y)) return false;
 			(PropertyInfo property, object instance) = GetClickedProperty(x, y); // do this first because value change could call this.Dispose()
 			if (property is null) return false;
 			var value = property.GetValue(instance);
-			var delta = property.GetCustomAttributes<UiIncrementAttribute>().Select(attr => attr.Value).Append(1.0).First();
-			delta = increment ? delta : -delta;
+			var valueChangeFunction = property.GetCustomAttributes<UiValueChangeFunctionAttribute>().Append(new UiValueChangeFunctionAttribute()).First();
+			valueChangeFunction = invert ? valueChangeFunction.Inverted() : valueChangeFunction;
+			var delta = property.GetCustomAttributes<UiValueChangeFunctionAttribute>().Select(attr => attr.Constant).Append(1.0).First();
+			delta = invert ? -delta : delta;
 			switch (value)
 			{
 				case bool boolValue:
@@ -130,20 +134,24 @@ namespace Example
 					var possibleValues = Enum.GetValues(enumValue.GetType());
 					var maxVal = possibleValues.Length - 1;
 					var val = Convert.ToInt32(enumValue);
-					val += (int)delta;
+					val += (int)valueChangeFunction.Constant;
 					property.SetValue(instance, Math.Clamp(val, 0, maxVal));
 					break;
 				case int intValue:
-					intValue += (int)delta;
+					intValue = (int)valueChangeFunction.NewValue(intValue);
 					property.SetValue(instance, intValue);
 					break;
 				case uint uintValue:
-					uintValue = (uint)((int)uintValue + delta);
+					uintValue = (uint)valueChangeFunction.NewValue(uintValue);
 					property.SetValue(instance, uintValue);
 					break;
 				case float floatValue:
-					floatValue += (float)delta;
+					floatValue = (float)valueChangeFunction.NewValue(floatValue);
 					property.SetValue(instance, floatValue);
+					break;
+				case double doubleValue:
+					doubleValue = valueChangeFunction.NewValue(doubleValue);
+					property.SetValue(instance, doubleValue);
 					break;
 			}
 			return true;

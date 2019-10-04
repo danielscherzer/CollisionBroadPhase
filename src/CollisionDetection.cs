@@ -16,7 +16,7 @@ namespace Example
 			Update();
 		}
 
-		[UiIncrement(8)]
+		[UiValueChangeFunction(8)]
 		public uint CellCount
 		{
 			get => _cellCount;
@@ -100,7 +100,7 @@ namespace Example
 		private ExponentialSmoothing collisionTime = new ExponentialSmoothing(0.01);
 		private IColliderProvider scene;
 		private bool iterativeCollisionMethod;
-		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.PersistentSAP;
+		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.MultiGrid;
 		private uint _cellCount = 32;
 
 		private void AddSceneObjects()

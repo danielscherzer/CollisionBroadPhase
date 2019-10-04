@@ -15,7 +15,7 @@ namespace Example
 	/// Please note that Game Gems article contains an error in what neighbors have to be traversed (see code below for details)
 	/// Not 3, but 4 neighbors have to be traversed!
 	/// </summary>
-	class CollisionMultiGrid<TCollider> : ICollisionMethodBroadPhase<TCollider> where TCollider : ICircle2dCollider
+	class CollisionMultiGrid<TCollider> : ICollisionGrid<TCollider>, ICollisionMethodBroadPhase<TCollider> where TCollider : ICircle2dCollider
 	{
 		public CollisionMultiGrid(int minLevel, int maxLevel, float minX, float minY, float size)
 		{

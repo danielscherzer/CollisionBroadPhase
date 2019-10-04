@@ -4,13 +4,21 @@
 	using System.Collections.Generic;
 	using System.Numerics;
 
-	public class CollisionGrid<TCollider> : ICollisionMethodBroadPhase<TCollider> where TCollider : IBox2DCollider
+	public class CollisionGrid<TCollider> : ICollisionGrid<TCollider>, ICollisionMethodBroadPhase<TCollider> where TCollider : IBox2DCollider
 	{
 		public int CellCountX { get; }
 		public int CellCountY { get; }
 		public Vector2 CellSize { get; }
 		public float MinX { get; }
 		public float MinY { get; }
+
+		public IEnumerable<IReadOnlyList<TCollider>[,]> Grids
+		{
+			get
+			{
+				yield return GetGrid();
+			}
+		}
 
 		public CollisionGrid(float minX, float minY, float sizeX, float sizeY, uint cellCountX, uint cellCountY)
 		{

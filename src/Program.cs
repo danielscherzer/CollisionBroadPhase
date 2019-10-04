@@ -1,6 +1,7 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using System.Linq;
 
 namespace Example
 {
@@ -20,8 +21,6 @@ namespace Example
 			var parameters = new Parameters();
 			var collisionDetection = new CollisionDetection(scene);
 			scene.OnChange += (_, __) => collisionDetection.Update();
-			//Property.OnChange(() => parameters.CollisionMethod, _ => collisionDetection.Recreate(), false);
-			//Bind.Property(() => parameters.DebugAlgo == parameters.Freeze);
 
 			var ui = new Ui(window);
 			void RecreateUi()
@@ -30,19 +29,12 @@ namespace Example
 				ui.AddPropertyGrid(parameters);
 				ui.AddPropertyGrid(scene);
 				ui.AddPropertyGrid(collisionDetection);
-				switch (collisionDetection.Algorithm)
+				if (collisionDetection.Algorithm is ICollisionGrid<ICollider> collGrid)
 				{
-					case CollisionMultiGrid<ICollider> collisionMethod:
-						for (int level = collisionMethod.MaxLevel; level >= collisionMethod.MinLevel; --level)
-						{
-							ui.AddCountGrid(collisionMethod.GetGridLevel(level));
-						}
-						break;
-					case CollisionGrid<ICollider> collisionMethod:
-						ui.AddCountGrid(collisionMethod.GetGrid());
-						break;
-					default:
-						break;
+					foreach (var grid in collGrid.Grids.Reverse())
+					{
+						ui.AddCountGrid(grid);
+					}
 				}
 			}
 			RecreateUi();

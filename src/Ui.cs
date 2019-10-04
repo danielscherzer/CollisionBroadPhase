@@ -20,7 +20,7 @@ namespace Example
 		{
 			foreach (var propGrid in propGrids)
 			{
-				if (propGrid.ChangeValueAt(e.X, e.Y, e.Button == Mouse.Button.Left)) return; //possible prop grid is removed -> so stop
+				if (propGrid.ChangeValueAt(e.X, e.Y, e.Button != Mouse.Button.Left)) return; //possible prop grid is removed -> so stop
 			}
 		}
 
