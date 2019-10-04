@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using SFML.Graphics;
+﻿using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 
@@ -9,8 +6,6 @@ namespace Example
 {
 	static class Program
 	{
-		private static readonly List<IDisposable> disposeList = new List<IDisposable>();
-
 		static void Main(string[] args)
 		{
 			var size = (uint)(VideoMode.DesktopMode.Height * 0.8f);
@@ -22,30 +17,36 @@ namespace Example
 			window.SetVerticalSyncEnabled(true);
 
 			var scene = new SceneAdapter(2000, 0.01f, 0.002f);
-			var parameters = new CollisionAdapter(scene);
-			var collisionDetection = new CollisionDetection(scene, parameters);
-			scene.OnRegeneration += (_, __) => collisionDetection.Recreate(scene, parameters);
-			Property.OnChange(() => parameters.CollisionMethod, _ => collisionDetection.Recreate(scene, parameters), false);
+			var parameters = new Parameters();
+			var collisionDetection = new CollisionDetection(scene);
+			scene.OnChange += (_, __) => collisionDetection.Update();
+			//Property.OnChange(() => parameters.CollisionMethod, _ => collisionDetection.Recreate(), false);
 			//Bind.Property(() => parameters.DebugAlgo == parameters.Freeze);
 
-			//Ui ui;
-			//void RecreateUi()
-			//{
-			//	ui?.Dispose();
-				var ui = new Ui(window, collisionDetection);
-				ui.AddPropertyGrid(scene);
-				ui.AddPropertyGrid(collisionDetection);
-				ui.AddPropertyGrid(parameters);
-			//}
-			//RecreateUi();
-			collisionDetection.OnRegeneration += (_, __) =>
+			var ui = new Ui(window);
+			void RecreateUi()
 			{
-				disposeList.Add(ui);
-				ui = new Ui(window, collisionDetection);
+				ui.Clear();
+				ui.AddPropertyGrid(parameters);
 				ui.AddPropertyGrid(scene);
 				ui.AddPropertyGrid(collisionDetection);
-				ui.AddPropertyGrid(parameters);
-			};
+				switch (collisionDetection.Algorithm)
+				{
+					case CollisionMultiGrid<ICollider> collisionMethod:
+						for (int level = collisionMethod.MaxLevel; level >= collisionMethod.MinLevel; --level)
+						{
+							ui.AddCountGrid(collisionMethod.GetGridLevel(level));
+						}
+						break;
+					case CollisionGrid<ICollider> collisionMethod:
+						ui.AddCountGrid(collisionMethod.GetGrid());
+						break;
+					default:
+						break;
+				}
+			}
+			RecreateUi();
+			collisionDetection.OnUpdate += (_, __) => RecreateUi();
 
 			var view = new View();
 			window.Resized += (_, a) => view.Resize((int)a.Width, (int)a.Height);
@@ -77,16 +78,11 @@ namespace Example
 					}
 				}
 
-				view.Draw(scene.GameObjects, algoDebug.Errors);
+				view.Draw(scene.Collider, algoDebug.Errors);
 
 				window.PushGLStates();
 				ui.Draw();
 				window.PopGLStates();
-				foreach(var disposable in disposeList)
-				{
-					disposable.Dispose();
-				}
-				disposeList.Clear();
 				window.Display(); //buffer swap for double buffering and wait for next frame
 			}
 		}

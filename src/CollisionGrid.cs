@@ -12,8 +12,12 @@
 		public float MinX { get; }
 		public float MinY { get; }
 
-		public CollisionGrid(float minX, float minY, float sizeX, float sizeY, int cellCountX, int cellCountY)
+		public CollisionGrid(float minX, float minY, float sizeX, float sizeY, uint cellCountX, uint cellCountY)
 		{
+			if (0 == cellCountX) throw new ArgumentOutOfRangeException(nameof(cellCountX));
+			if (0 == cellCountY) throw new ArgumentOutOfRangeException(nameof(cellCountY));
+			if (0 >= sizeX) throw new ArgumentOutOfRangeException(nameof(sizeX));
+			if (0 >= sizeY) throw new ArgumentOutOfRangeException(nameof(sizeY));
 			CellSize = new Vector2(sizeX / cellCountX, sizeY / cellCountY);
 
 			cells = new List<TCollider>[cellCountX, cellCountY];
@@ -27,8 +31,8 @@
 
 			MinX = minX;
 			MinY = minY;
-			CellCountX = cellCountX;
-			CellCountY = cellCountY;
+			CellCountX = (int)cellCountX;
+			CellCountY = (int)cellCountY;
 		}
 
 		public void Add(TCollider collider)

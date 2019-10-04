@@ -6,8 +6,6 @@ namespace Example
 {
 	/// <summary>
 	/// Sweep and Prune collision detection
-	/// Not fully implemented just quick test, if it is usable for non iterative applications
-	/// Result: Too slow if rebuilt each frame.
 	/// If built iteratively: fast if little movement (insertion sorting fast), degenerates with more movement (more sorting)
 	/// Do not add/delete GameObjects without adding/removing them from the SAP structure too!
 	/// </summary>
@@ -187,7 +185,6 @@ namespace Example
 				bounds[i + 1] = bound;
 			}
 		}
-
 
 		/// <summary>
 		/// O(n log(n))

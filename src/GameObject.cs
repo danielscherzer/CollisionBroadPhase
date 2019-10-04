@@ -1,4 +1,3 @@
-using System;
 using System.Numerics;
 
 namespace Example
@@ -6,7 +5,7 @@ namespace Example
 	/// <summary>
 	/// Base class for all game objects. It uses a circle based intersection test.
 	/// </summary>
-	public class GameObject : ICircle2dCollider, IBox2DCollider
+	public class GameObject : ICollider
 	{
 		public GameObject(float centerX, float centerY, float radius)
 		{
@@ -32,9 +31,9 @@ namespace Example
 
 		public float MaxY => CenterY + Radius;
 
-		public void HandleCollision(GameObject other)
+		public void HandleCollision(ICollider other)
 		{
-			var diff = Center - other.Center;
+			var diff = Center - (other as GameObject).Center;
 			Velocity = Vector2.Normalize(diff) * Velocity.Length();
 		}
 

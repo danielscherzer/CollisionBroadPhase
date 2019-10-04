@@ -11,11 +11,8 @@ namespace Example
 {
 	class UiPropertyGrid : Disposable, Drawable, IRectangleShape
 	{
-		public UiPropertyGrid(RenderWindow window, Vector2f position, Font font)
+		public UiPropertyGrid(Vector2f position, Font font)
 		{
-			window.MouseButtonReleased += Window_MouseButtonReleased;
-			window.KeyReleased += Window_KeyReleased;
-			this.window = window ?? throw new ArgumentNullException(nameof(window));
 			border = 5f;
 			background = new RectangleShape
 			{
@@ -74,8 +71,6 @@ namespace Example
 
 		protected override void DisposeResources()
 		{
-			window.MouseButtonReleased -= Window_MouseButtonReleased;
-			window.KeyReleased -= Window_KeyReleased;
 			properties.Clear();
 			foreach (var text in texts)
 			{
@@ -89,7 +84,6 @@ namespace Example
 		private readonly float border;
 		private readonly Text textBlueprint;
 		private readonly RectangleShape background;
-		private readonly RenderWindow window;
 		private readonly List<Text> texts = new List<Text>();
 		private readonly List<(Text, PropertyInfo, object)> properties = new List<(Text, PropertyInfo, object)>();
 
@@ -119,18 +113,14 @@ namespace Example
 			}
 		}
 
-		private void Window_KeyReleased(object sender, KeyEventArgs e)
+		public bool ChangeValueAt(int x, int y, bool increment)
 		{
-		}
-
-		private void Window_MouseButtonReleased(object sender, MouseButtonEventArgs e)
-		{
-			if (!background.GetGlobalBounds().Contains(e.X, e.Y)) return;
-			(PropertyInfo property, object instance) = GetClickedProperty(e.X, e.Y); // do this first because value change could call this.Dispose()
-			if (property is null) return;
+			if (!background.GetGlobalBounds().Contains(x, y)) return false;
+			(PropertyInfo property, object instance) = GetClickedProperty(x, y); // do this first because value change could call this.Dispose()
+			if (property is null) return false;
 			var value = property.GetValue(instance);
-			var increment = property.GetCustomAttributes<UiIncrementAttribute>().Select(attr => attr.Value).Append(1.0).First();
-			increment = e.Button == Mouse.Button.Left ? increment : -increment;
+			var delta = property.GetCustomAttributes<UiIncrementAttribute>().Select(attr => attr.Value).Append(1.0).First();
+			delta = increment ? delta : -delta;
 			switch (value)
 			{
 				case bool boolValue:
@@ -140,22 +130,23 @@ namespace Example
 					var possibleValues = Enum.GetValues(enumValue.GetType());
 					var maxVal = possibleValues.Length - 1;
 					var val = Convert.ToInt32(enumValue);
-					val += (int)increment;
+					val += (int)delta;
 					property.SetValue(instance, Math.Clamp(val, 0, maxVal));
 					break;
 				case int intValue:
-					intValue += (int)increment;
+					intValue += (int)delta;
 					property.SetValue(instance, intValue);
 					break;
 				case uint uintValue:
-					uintValue = (uint)((int)uintValue + increment);
+					uintValue = (uint)((int)uintValue + delta);
 					property.SetValue(instance, uintValue);
 					break;
 				case float floatValue:
-					floatValue += (float)increment;
+					floatValue += (float)delta;
 					property.SetValue(instance, floatValue);
 					break;
 			}
+			return true;
 		}
 
 		private (PropertyInfo, object) GetClickedProperty(int x, int y)

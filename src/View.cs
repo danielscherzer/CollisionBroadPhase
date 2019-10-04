@@ -43,24 +43,24 @@ namespace Example
 			GL.Viewport(0, 0, width, height); // tell OpenGL to use the whole window for drawing
 		}
 
-		internal void Draw(IEnumerable<GameObject> gameObjects, IEnumerable<GameObject> errors)
+		internal void Draw(IEnumerable<ICircle2dCollider> gameObjects, IEnumerable<ICircle2dCollider> errors)
 		{
 			GL.Clear(ClearBufferMask.ColorBufferBit);
 			GL.Color3(Color.Gray);
 			GL.BindVertexArray(vertexArray); // activate vertex array
 			foreach (var asteroid in gameObjects)
 			{
-				DrawAsteroid(asteroid.Center, asteroid.Radius);
+				DrawAsteroid(asteroid.CenterX, asteroid.CenterY, asteroid.Radius);
 			}
 			GL.Color3(Color.DarkGray);
 			foreach (var asteroid in gameObjects)
 			{
-				DrawAsteroid(asteroid.Center, asteroid.Radius, PrimitiveType.LineLoop);
+				DrawAsteroid(asteroid.CenterX, asteroid.CenterY, asteroid.Radius, PrimitiveType.LineLoop);
 			}
 			GL.Color3(Color.Red);
 			foreach (var error in errors)
 			{
-				DrawAsteroid(error.Center, error.Radius, PrimitiveType.LineLoop);
+				DrawAsteroid(error.CenterX, error.CenterY, error.Radius, PrimitiveType.LineLoop);
 			}
 			GL.BindVertexArray(0); // deactivate vertex array
 		}
@@ -92,23 +92,13 @@ namespace Example
 			return points;
 		}
 
-		private void DrawAsteroid(System.Numerics.Vector2 center, float radius, PrimitiveType primitiveType = PrimitiveType.TriangleFan)
+		private void DrawAsteroid(float centerX, float centerY, float radius, PrimitiveType primitiveType = PrimitiveType.TriangleFan)
 		{
 			GL.PushMatrix();
-			GL.Translate(center.X, center.Y, 0f);
+			GL.Translate(centerX, centerY, 0f);
 			GL.Scale(radius, radius, radius);
 			GL.DrawArrays(primitiveType, 0, asteroidVertexCount); // draw with vertex array data
 			GL.PopMatrix();
-		}
-
-		private static void DrawQuad(Vector2 center, float radius)
-		{
-			GL.Begin(PrimitiveType.Quads);
-			GL.Vertex2(center + new Vector2(-radius, -radius));
-			GL.Vertex2(center + new Vector2(radius, -radius));
-			GL.Vertex2(center + new Vector2(radius, radius));
-			GL.Vertex2(center + new Vector2(-radius, radius));
-			GL.End();
 		}
 	}
 }
