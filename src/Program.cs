@@ -1,4 +1,5 @@
-﻿using SFML.Graphics;
+﻿using Collision;
+using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 using System.Linq;
@@ -7,20 +8,20 @@ namespace Example
 {
 	static class Program
 	{
-		static void Main(string[] args)
+		static void Main(string[] _)
 		{
 			var size = (uint)(VideoMode.DesktopMode.Height * 0.8f);
 			var gameWindow = new OpenTK.GameWindow(); // required before RenderWindow construction for OpenGL use
 			var window = new RenderWindow(new VideoMode(size, size), "Collision Grid");
 
-			window.Closed += (_, __) => window.Close();
+			window.Closed += (_1, _2) => window.Close();
 			window.SetKeyRepeatEnabled(false);
 			window.SetVerticalSyncEnabled(true);
 
 			var scene = new SceneAdapter(2000, 0.01f, 0.002f);
 			var parameters = new Parameters();
 			var collisionDetection = new CollisionDetection(scene);
-			scene.OnChange += (_, __) => collisionDetection.Update();
+			scene.OnChange += (_1, _2) => collisionDetection.Update();
 
 			var ui = new Ui(window);
 			void RecreateUi()
@@ -38,13 +39,13 @@ namespace Example
 				}
 			}
 			RecreateUi();
-			collisionDetection.OnUpdate += (_, __) => RecreateUi();
+			collisionDetection.OnUpdate += (_1, _2) => RecreateUi();
 
 			var view = new View();
-			window.Resized += (_, a) => view.Resize((int)a.Width, (int)a.Height);
-			//window.Resized += (_, a) => ui.Resize((int)a.Width, (int)a.Height);
+			window.Resized += (_1, a) => view.Resize((int)a.Width, (int)a.Height);
+			//window.Resized += (_1, a) => ui.Resize((int)a.Width, (int)a.Height);
 
-			window.KeyPressed += (_, a) =>
+			window.KeyPressed += (_1, a) =>
 			{
 				if (Keyboard.Key.Escape == a.Code)
 				{

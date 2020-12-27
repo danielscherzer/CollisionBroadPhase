@@ -1,4 +1,4 @@
-﻿namespace Example
+﻿namespace Collision
 {
 	public interface IBox2DCollider
 	{

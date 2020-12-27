@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Example
+namespace Collision
 {
 	public interface ICollisionMethodBroadPhase<TCollider>
 	{

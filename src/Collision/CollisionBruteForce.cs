@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Example
+namespace Collision
 {
 	class CollisionBruteForce<TCollider> : ICollisionMethodBroadPhase<TCollider>
 	{
@@ -28,6 +28,6 @@ namespace Example
 			}
 		}
 
-		private List<TCollider> colliders = new List<TCollider>();
+		private readonly List<TCollider> colliders = new List<TCollider>();
 	}
 }

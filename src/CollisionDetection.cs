@@ -1,3 +1,4 @@
+using Collision;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -97,8 +98,8 @@ namespace Example
 			return collidingSet;
 		}
 
-		private ExponentialSmoothing collisionTime = new ExponentialSmoothing(0.01);
-		private IColliderProvider scene;
+		private readonly ExponentialSmoothing collisionTime = new ExponentialSmoothing(0.01);
+		private readonly IColliderProvider scene;
 		private bool iterativeCollisionMethod;
 		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.MultiGrid;
 		private uint _cellCount = 32;

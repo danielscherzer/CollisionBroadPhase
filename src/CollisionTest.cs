@@ -1,4 +1,4 @@
-﻿namespace Example
+﻿namespace Collision
 {
 	public static class CollisionTest
 	{

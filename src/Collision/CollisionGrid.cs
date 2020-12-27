@@ -1,9 +1,9 @@
-﻿namespace Example
-{
-	using System;
-	using System.Collections.Generic;
-	using System.Numerics;
+﻿using System;
+using System.Collections.Generic;
+using System.Numerics;
 
+namespace Collision
+{
 	public class CollisionGrid<TCollider> : ICollisionGrid<TCollider>, ICollisionMethodBroadPhase<TCollider> where TCollider : IBox2DCollider
 	{
 		public int CellCountX { get; }
@@ -72,7 +72,7 @@
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
-			foreach(var cell in cells)
+			foreach (var cell in cells)
 			{
 				CheckCell(collisionHandler, cell);
 			}

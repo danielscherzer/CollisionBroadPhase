@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Example
+namespace Collision
 {
 	/// <summary>
 	/// Sweep and Prune collision detection in one axis direction

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace Example
+namespace Collision
 {
 	/// <summary>
 	/// Sweep and Prune collision detection
@@ -180,7 +180,7 @@ namespace Example
 					}
 
 					bounds[i + 1] = swapBound;
-					i = i - 1;
+					--i;
 				}
 				bounds[i + 1] = bound;
 			}

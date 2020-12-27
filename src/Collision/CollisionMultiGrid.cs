@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Example
+namespace Collision
 {
 	/// <summary>
 	/// Multi resolution collision grid 
@@ -108,7 +108,7 @@ namespace Example
 
 		public IReadOnlyList<TCollider>[,] GetGridLevel(int level) => multiGrid[level - MinLevel].Item2;
 
-		private List<(float, List<TCollider>[,])> multiGrid = new List<(float, List<TCollider>[,])>();
+		private readonly List<(float, List<TCollider>[,])> multiGrid = new List<(float, List<TCollider>[,])>();
 
 		private (float cellSize, List<TCollider>[,] grid) GetLevel(int level) => multiGrid[level - MinLevel];
 

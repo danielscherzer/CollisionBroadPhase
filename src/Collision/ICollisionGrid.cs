@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Example
+namespace Collision
 {
 	interface ICollisionGrid<TCollider>
 	{
