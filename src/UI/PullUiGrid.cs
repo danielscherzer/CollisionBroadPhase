@@ -2,7 +2,7 @@
 using SFML.System;
 using System;
 
-namespace Example
+namespace UI
 {
 	class PullUiGrid :  Transformable, Drawable, IRectangleShape
 	{

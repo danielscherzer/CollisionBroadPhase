@@ -1,7 +1,7 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 
-namespace Example
+namespace UI
 {
 	class UiGrid : Transformable, Drawable, IRectangleShape
 	{
@@ -18,8 +18,10 @@ namespace Example
 			{
 				for (int row = 0; row < rows; ++row)
 				{
-					var text = new Text(textBlueprint);
-					text.Position = (0.5f + column) * deltaX + (0.5f + row) * deltaY;
+					var text = new Text(textBlueprint)
+					{
+						Position = (0.5f + column) * deltaX + (0.5f + row) * deltaY
+					};
 					cellTexts[column, columns - 1 - row] = text;
 				}
 

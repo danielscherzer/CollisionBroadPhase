@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Example
+namespace UI
 {
-	public class UiValueChangeFunctionAttribute : Attribute
+	public sealed class UiValueChangeFunctionAttribute : Attribute
 	{
 		public UiValueChangeFunctionAttribute(double constant = 1.0, double multiplier = 1.0)
 		{

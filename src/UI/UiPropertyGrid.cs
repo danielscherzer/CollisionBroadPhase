@@ -1,13 +1,12 @@
 ﻿using SFML.Graphics;
 using SFML.System;
-using SFML.Window;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Zenseless.Patterns;
 
-namespace Example
+namespace UI
 {
 	class UiPropertyGrid : Disposable, Drawable, IRectangleShape
 	{

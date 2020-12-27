@@ -3,6 +3,7 @@ using SFML.System;
 using SFML.Window;
 using System;
 using System.Collections.Generic;
+using UI;
 using Zenseless.Patterns;
 
 namespace Example
@@ -33,7 +34,7 @@ namespace Example
 			drawables.Add(uiGrid);
 
 			++currentColorId;
-			currentColorId = currentColorId % colors.Length;
+			currentColorId %= colors.Length;
 		}
 
 		public void AddPropertyGrid(object obj)
@@ -82,10 +83,10 @@ namespace Example
 		private float currentY = 0f;
 		private int currentColorId = 0;
 		private readonly Font font;
-		private RenderWindow window;
-		private List<Drawable> drawables = new List<Drawable>();
-		private List<UiPropertyGrid> propGrids = new List<UiPropertyGrid>();
-		private static Color[] colors = new Color[] { Color.White, Color.Blue, Color.Yellow, Color.Green, Color.Magenta, Color.Red };
+		private readonly RenderWindow window;
+		private readonly List<Drawable> drawables = new List<Drawable>();
+		private readonly List<UiPropertyGrid> propGrids = new List<UiPropertyGrid>();
+		private static readonly Color[] colors = new Color[] { Color.White, Color.Blue, Color.Yellow, Color.Green, Color.Magenta, Color.Red };
 
 		private string GetCellString(IReadOnlyList<object>[,] grid, int column, int row)
 		{
