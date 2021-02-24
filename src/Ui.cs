@@ -88,7 +88,7 @@ namespace Example
 		private readonly List<UiPropertyGrid> propGrids = new List<UiPropertyGrid>();
 		private static readonly Color[] colors = new Color[] { Color.White, Color.Blue, Color.Yellow, Color.Green, Color.Magenta, Color.Red };
 
-		private string GetCellString(IReadOnlyList<object>[,] grid, int column, int row)
+		private static string GetCellString(IReadOnlyList<object>[,] grid, int column, int row)
 		{
 			var count = grid[column, row].Count;
 			return 0 == count ? "" : count.ToString();

@@ -43,7 +43,7 @@ namespace Example
 
 			var view = new View();
 			window.Resized += (_1, a) => view.Resize((int)a.Width, (int)a.Height);
-			//window.Resized += (_1, a) => ui.Resize((int)a.Width, (int)a.Height);
+			window.Resized += (_1, a) => ui.Resize((int)a.Width, (int)a.Height);
 
 			window.KeyPressed += (_1, a) =>
 			{
