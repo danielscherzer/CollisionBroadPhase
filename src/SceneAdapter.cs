@@ -10,7 +10,7 @@ namespace Example
 	{
 		public SceneAdapter(int objectCount, float objectMinSize, float objectSizeVariation)
 		{
-			_freeze = false;
+			_freeze = true;
 			_movingObjectPercentage = 0f;
 			_objectCount = objectCount;
 			_objectMinSize = objectMinSize;

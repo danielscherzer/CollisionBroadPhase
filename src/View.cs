@@ -1,6 +1,7 @@
 using Collision;
 using OpenTK;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
 
@@ -13,7 +14,7 @@ namespace Example
 	{
 		public View()
 		{
-			GL.ClearColor(Color.Black);
+			GL.ClearColor(Color4.Black);
 			var asteroidPoints = CreateAsteroidPoints();
 			asteroidVertexCount = asteroidPoints.Count;
 			var array = asteroidPoints.ToArray(); //create an array (data is guarantied to be consecutive in memory
@@ -47,18 +48,18 @@ namespace Example
 		internal void Draw(IEnumerable<ICircle2dCollider> gameObjects, IEnumerable<ICircle2dCollider> errors)
 		{
 			GL.Clear(ClearBufferMask.ColorBufferBit);
-			GL.Color3(Color.Gray);
+			GL.Color4(Color4.Gray);
 			GL.BindVertexArray(vertexArray); // activate vertex array
 			foreach (var asteroid in gameObjects)
 			{
 				DrawAsteroid(asteroid.CenterX, asteroid.CenterY, asteroid.Radius);
 			}
-			GL.Color3(Color.DarkGray);
+			GL.Color4(Color4.DarkGray);
 			foreach (var asteroid in gameObjects)
 			{
 				DrawAsteroid(asteroid.CenterX, asteroid.CenterY, asteroid.Radius, PrimitiveType.LineLoop);
 			}
-			GL.Color3(Color.Red);
+			GL.Color4(Color4.Red);
 			foreach (var error in errors)
 			{
 				DrawAsteroid(error.CenterX, error.CenterY, error.Radius, PrimitiveType.LineLoop);

@@ -102,7 +102,7 @@ namespace Example
 		private readonly ExponentialSmoothing collisionTime = new ExponentialSmoothing(0.01);
 		private readonly IColliderProvider scene;
 		private bool iterativeCollisionMethod;
-		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.MultiGrid;
+		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.Grid;
 		private uint _cellCount = 32;
 
 		private void AddSceneObjects()

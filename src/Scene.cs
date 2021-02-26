@@ -44,7 +44,7 @@ namespace Example
 			}
 		}
 
-		private List<GameObject> gameObjects = new List<GameObject>();
+		private readonly List<GameObject> gameObjects = new List<GameObject>();
 		private readonly Random randomNumber;
 
 		private Vector2 RandomVector()

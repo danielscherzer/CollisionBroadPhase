@@ -1,4 +1,6 @@
 ﻿using Collision;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
@@ -11,14 +13,15 @@ namespace Example
 		static void Main(string[] _)
 		{
 			var size = (uint)(VideoMode.DesktopMode.Height * 0.8f);
-			var gameWindow = new OpenTK.GameWindow(); // required before RenderWindow construction for OpenGL use
+			var gameWindow = new GameWindow(GameWindowSettings.Default, new NativeWindowSettings { Profile = ContextProfile.Compatability }); // required before RenderWindow construction for OpenGL use
+			gameWindow.IsVisible = false;
 			var window = new RenderWindow(new VideoMode(size, size), "Collision Grid");
 
 			window.Closed += (_1, _2) => window.Close();
 			window.SetKeyRepeatEnabled(false);
 			window.SetVerticalSyncEnabled(true);
 
-			var scene = new SceneAdapter(2000, 0.01f, 0.002f);
+			var scene = new SceneAdapter(8000, 0.01f, 0.002f);
 			var parameters = new Parameters();
 			var collisionDetection = new CollisionDetection(scene);
 			scene.OnChange += (_1, _2) => collisionDetection.Update();

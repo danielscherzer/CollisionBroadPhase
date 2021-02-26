@@ -6,15 +6,9 @@ namespace Collision
 	class CollisionBruteForce<TCollider> : ICollisionMethodBroadPhase<TCollider>
 	{
 
-		public void Add(TCollider collider)
-		{
-			colliders.Add(collider);
-		}
+		public void Add(TCollider collider) => colliders.Add(collider);
 
-		public void Clear()
-		{
-			colliders.Clear();
-		}
+		public void Clear() => colliders.Clear();
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{

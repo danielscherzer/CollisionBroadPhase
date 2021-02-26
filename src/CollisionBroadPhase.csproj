@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="OpenTK.NetStandard" Version="1.0.5.32" />
+    <PackageReference Include="OpenTK" Version="4.5.0" />
     <PackageReference Include="SFML.Graphics" Version="2.5.0" />
     <PackageReference Include="Zenseless.Patterns" Version="0.5.149" />
   </ItemGroup>
