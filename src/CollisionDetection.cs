@@ -10,7 +10,7 @@ namespace Example
 	/// <summary>
 	/// Class that handles the collision detection
 	/// </summary>
-	internal class CollisionDetection : NotifyPropertyChanged
+	public class CollisionDetection : NotifyPropertyChanged
 	{
 		public CollisionDetection(IColliderProvider scene)
 		{
@@ -68,7 +68,6 @@ namespace Example
 			OnUpdate?.Invoke(this, EventArgs.Empty);
 		}
 
-		public int NarrowPhaseCollisionTestCount { get; private set; } = 0;
 		public int CollisionCount { get; private set; } = 10000;
 		public float CollisionTimeMsec { get; private set; } = 5.0001f;
 		[UiIgnore]
@@ -84,7 +83,6 @@ namespace Example
 				AddSceneObjects();
 			}
 			var collidingSet = new HashSet<(ICollider, ICollider)>();
-			NarrowPhaseCollisionTestCount = 0;
 			Algorithm.FindAllCollisions((a, b) => ExactCollision(collidingSet, a, b));
 			stopWatch.Stop();
 
@@ -114,9 +112,8 @@ namespace Example
 			}
 		}
 
-		private void ExactCollision(HashSet<(ICollider, ICollider)> collidingSet, ICollider a, ICollider b)
+		public static void ExactCollision(HashSet<(ICollider, ICollider)> collidingSet, ICollider a, ICollider b)
 		{
-			++NarrowPhaseCollisionTestCount;
 			if (a.Intersects(b))
 			{
 				collidingSet.Add(a.GetHashCode() < b.GetHashCode() ? (a, b) : (b, a));

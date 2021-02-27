@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 
 namespace Collision
 {
@@ -11,7 +10,7 @@ namespace Collision
 	/// </summary>
 	public class CollisionPersistentSAP<TCollider> : ICollisionMethodBroadPhase<TCollider> where TCollider : IBox2DCollider
 	{
-		int newlyAdded = 0;
+		private int newlyAdded = 0;
 		public void Add(TCollider objectBounds)
 		{
 			boundsX.Add(new LowerXBound(objectBounds));
@@ -71,7 +70,7 @@ namespace Collision
 			public TCollider Collider { get; }
 			public float Value => _value;
 
-			abstract public bool IsLowerBound { get; }
+			public abstract bool IsLowerBound { get; }
 
 			public Bound(TCollider collider)
 			{
@@ -79,7 +78,7 @@ namespace Collision
 				UpdateValue();
 			}
 
-			abstract public void UpdateValue();
+			public abstract void UpdateValue();
 
 			public int CompareTo(Bound other) => Value.CompareTo(other.Value);
 		}

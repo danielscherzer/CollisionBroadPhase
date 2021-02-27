@@ -57,18 +57,18 @@ namespace CollisionBroadPhase.Test
 			grid.Add(a);
 			grid.FindAllCollisions((c1, c2) => Assert.AreEqual((a, a), (c1, c2)));
 
-			var expected = new HashSet<(GameObject, GameObject)> { (a, a) };
-			var result = new HashSet<(GameObject, GameObject)>();
+			var expected = new HashSet<(ICollider, ICollider)> { (a, a) };
+			var result = new HashSet<(ICollider, ICollider)>();
 			grid.FindAllCollisions((c1, c2) => result.Add((c1, c2)));
 			CollectionAssert.AreEqual(expected.ToList(), result.ToList());
 		}
 
-		private static void AddOrdererdPair(HashSet<(GameObject, GameObject)> collidingSet, GameObject a, GameObject b)
+		private static void AddOrdererdPair(HashSet<(ICollider, ICollider)> collidingSet, ICollider a, ICollider b)
 		{
 			collidingSet.Add(a.GetHashCode() < b.GetHashCode() ? (a, b) : (b, a));
 		}
 
-		private static void ExactCollision(HashSet<(GameObject, GameObject)> collidingSet, GameObject a, GameObject b)
+		private static void ExactCollision(HashSet<(ICollider, ICollider)> collidingSet, ICollider a, ICollider b)
 		{
 			if (a.Intersects(b))
 			{
@@ -76,7 +76,7 @@ namespace CollisionBroadPhase.Test
 			}
 		}
 
-		private static string Print(HashSet<(GameObject, GameObject)> collisionPairs) => string.Join(',', collisionPairs);
+		private static string Print(HashSet<(ICollider, ICollider)> collisionPairs) => string.Join(',', collisionPairs);
 
 		private static IEnumerable<object[]> GetGameObjects()
 		{
@@ -94,10 +94,10 @@ namespace CollisionBroadPhase.Test
 			var grid = new CollisionGrid<GameObject>(-1, -1, 2, 2, 1, 1);
 			foreach(var gameObject in gameObjects) grid.Add(gameObject);
 
-			var expected = new HashSet<(GameObject, GameObject)>();
-			var result = new HashSet<(GameObject, GameObject)>();
+			var expected = new HashSet<(ICollider, ICollider)>();
+			var result = new HashSet<(ICollider, ICollider)>();
 			foreach ((int a, int b) in collidingIds) AddOrdererdPair(expected, gameObjects[a], gameObjects[b]);
-			grid.FindAllCollisions((c1, c2) => ExactCollision(result,c1, c2));
+			grid.FindAllCollisions((c1, c2) => CollisionDetection.ExactCollision(result,c1, c2));
 			CollectionAssert.AreEqual(expected.ToList(), result.ToList(), $"\n\tExpected={Print(expected)}\n\tActual={Print(result)}");
 		}
 	}

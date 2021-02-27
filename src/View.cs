@@ -1,5 +1,4 @@
 using Collision;
-using OpenTK;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using System;
@@ -45,7 +44,7 @@ namespace Example
 			GL.Viewport(0, 0, width, height); // tell OpenGL to use the whole window for drawing
 		}
 
-		internal void Draw(IEnumerable<ICircle2dCollider> gameObjects, IEnumerable<ICircle2dCollider> errors)
+		internal void Draw(IEnumerable<ICircle2dCollider> gameObjects, IEnumerable<ICircle2dCollider> highlightGameObjects, bool fillHighlighted = false)
 		{
 			GL.Clear(ClearBufferMask.ColorBufferBit);
 			GL.Color4(Color4.Gray);
@@ -60,9 +59,9 @@ namespace Example
 				DrawAsteroid(asteroid.CenterX, asteroid.CenterY, asteroid.Radius, PrimitiveType.LineLoop);
 			}
 			GL.Color4(Color4.Red);
-			foreach (var error in errors)
+			foreach (var error in highlightGameObjects)
 			{
-				DrawAsteroid(error.CenterX, error.CenterY, error.Radius, PrimitiveType.LineLoop);
+				DrawAsteroid(error.CenterX, error.CenterY, error.Radius, fillHighlighted ? PrimitiveType.TriangleFan : PrimitiveType.LineLoop);
 			}
 			GL.BindVertexArray(0); // deactivate vertex array
 		}

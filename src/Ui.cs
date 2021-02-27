@@ -8,7 +8,7 @@ using Zenseless.Patterns;
 
 namespace Example
 {
-	class Ui : Disposable
+	internal class Ui : Disposable
 	{
 		public Ui(RenderWindow window)
 		{

@@ -4,7 +4,7 @@ using System;
 
 namespace UI
 {
-	class PullUiGrid :  Transformable, Drawable, IRectangleShape
+	internal class PullUiGrid :  Transformable, Drawable, IRectangleShape
 	{
 		private readonly UiGrid uiGrid;
 		private readonly Func<int, int, string> getCellString;

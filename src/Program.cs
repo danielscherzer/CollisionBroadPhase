@@ -4,17 +4,21 @@ using OpenTK.Windowing.Desktop;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Example
 {
-	static class Program
+	internal static class Program
 	{
-		static void Main(string[] _)
+		private static void Main(string[] _)
 		{
 			var size = (uint)(VideoMode.DesktopMode.Height * 0.8f);
-			var gameWindow = new GameWindow(GameWindowSettings.Default, new NativeWindowSettings { Profile = ContextProfile.Compatability }); // required before RenderWindow construction for OpenGL use
-			gameWindow.IsVisible = false;
+			var gameWindow = new GameWindow(GameWindowSettings.Default, new NativeWindowSettings { Profile = ContextProfile.Compatability })
+			{
+				IsVisible = false
+			}; 
+			// required before RenderWindow construction for OpenGL use
 			var window = new RenderWindow(new VideoMode(size, size), "Collision Grid");
 
 			window.Closed += (_1, _2) => window.Close();
@@ -48,16 +52,18 @@ namespace Example
 			window.Resized += (_1, a) => view.Resize((int)a.Width, (int)a.Height);
 			window.Resized += (_1, a) => ui.Resize((int)a.Width, (int)a.Height);
 
+			bool drawUi = true;
 			window.KeyPressed += (_1, a) =>
 			{
-				if (Keyboard.Key.Escape == a.Code)
+				switch(a.Code)
 				{
-					window.Close();
+					case Keyboard.Key.Escape: window.Close(); break;
+					case Keyboard.Key.Tab: drawUi = !drawUi; break;
 				}
 			};
 
-			CollisionAlgoDebug algoDebug = new CollisionAlgoDebug();
-
+			var refCollisionAlgo = new CollisionGrid<ICollider>(-1f, -1f, 2f, 2f, 32, 32);
+			IEnumerable<ICollider> highlight = Enumerable.Empty<ICollider>();
 			var clock = new Clock();
 			while (window.IsOpen)
 			{
@@ -70,14 +76,20 @@ namespace Example
 					var collidingSet = collisionDetection.FindCollisions();
 					if (parameters.DebugAlgo)
 					{
-						algoDebug.Check(scene, collidingSet);
+						var result = refCollisionAlgo.FindAllCollisions(scene);
+						collidingSet.SymmetricExceptWith(result);
+						highlight = collidingSet.Flatten();
+					}
+					else
+					{
+						highlight = collidingSet.Flatten();
 					}
 				}
 
-				view.Draw(scene.Collider, algoDebug.Errors);
+				view.Draw(scene.Collider, highlight, parameters.DebugAlgo);
 
 				window.PushGLStates();
-				ui.Draw();
+				if(drawUi) ui.Draw();
 				window.PopGLStates();
 				window.Display(); //buffer swap for double buffering and wait for next frame
 			}

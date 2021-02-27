@@ -2,7 +2,7 @@
 
 namespace UI
 {
-	sealed class UiIgnoreAttribute : Attribute
+	internal sealed class UiIgnoreAttribute : Attribute
 	{
 	}
 }

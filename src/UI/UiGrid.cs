@@ -3,7 +3,7 @@ using SFML.System;
 
 namespace UI
 {
-	class UiGrid : Transformable, Drawable, IRectangleShape
+	internal class UiGrid : Transformable, Drawable, IRectangleShape
 	{
 		public UiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color, Font font)
 		{

@@ -73,7 +73,7 @@ namespace Collision
 				UpdateValue();
 			}
 
-			abstract public void UpdateValue();
+			public abstract void UpdateValue();
 
 			public int CompareTo(Bound other) => Value.CompareTo(other.Value);
 		}

@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace Example
 {
-	class Scene
+	internal class Scene
 	{
 		public Scene(int objectCount, float objectMinSize, float objectSizeVariation)
 		{

@@ -2,7 +2,7 @@
 
 namespace Collision
 {
-	interface ICollisionGrid<TCollider>
+	internal interface ICollisionGrid<TCollider>
 	{
 		IEnumerable<IReadOnlyList<TCollider>[,]> Grids { get; }
 	}

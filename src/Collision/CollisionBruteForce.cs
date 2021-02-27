@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Collision
 {
-	class CollisionBruteForce<TCollider> : ICollisionMethodBroadPhase<TCollider>
+	internal class CollisionBruteForce<TCollider> : ICollisionMethodBroadPhase<TCollider>
 	{
 
 		public void Add(TCollider collider) => colliders.Add(collider);

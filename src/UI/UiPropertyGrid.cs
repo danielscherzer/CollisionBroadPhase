@@ -8,7 +8,7 @@ using Zenseless.Patterns;
 
 namespace UI
 {
-	class UiPropertyGrid : Disposable, Drawable, IRectangleShape
+	internal class UiPropertyGrid : Disposable, Drawable, IRectangleShape
 	{
 		public UiPropertyGrid(Vector2f position, Font font)
 		{

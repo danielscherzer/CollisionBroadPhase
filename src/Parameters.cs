@@ -2,7 +2,7 @@
 
 namespace Example
 {
-	class Parameters : NotifyPropertyChanged
+	internal class Parameters : NotifyPropertyChanged
 	{
 		public bool CollisionDetection
 		{
