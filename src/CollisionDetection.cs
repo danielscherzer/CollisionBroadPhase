@@ -1,5 +1,6 @@
 using Collision;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UI;
@@ -19,7 +20,7 @@ namespace Example
 		}
 
 		[UiValueChangeFunction(8)]
-		public uint CellCount
+		public int CellCount
 		{
 			get => _cellCount;
 			set => SetNotify(ref _cellCount, value, cellCount => Update());
@@ -45,7 +46,8 @@ namespace Example
 					iterativeCollisionMethod = true;
 					break;
 				case CollisionMethodTypes.Grid:
-					Algorithm = new CollisionGrid<ICollider>(-1f, -1f, 2f, 2f, CellCount, CellCount);
+					var grid = new CollisionGrid<ICollider>(-1f, -1f, 2f, 2f, CellCount, CellCount);
+					Algorithm = grid;
 					break;
 				case CollisionMethodTypes.MultiGrid:
 					var level = (int)Math.Ceiling(Math.Log(CellCount) / Math.Log(2.0));
@@ -82,8 +84,13 @@ namespace Example
 			{
 				AddSceneObjects();
 			}
-			var collidingSet = new HashSet<(ICollider, ICollider)>();
-			Algorithm.FindAllCollisions((a, b) => ExactCollision(collidingSet, a, b));
+			//var collidingSet = new HashSet<(ICollider, ICollider)>();
+			//Algorithm.FindAllCollisions((a, b) => ExactCollision(collidingSet, a, b));
+
+			var cb = new ConcurrentBag<(ICollider, ICollider)>();
+			Algorithm.FindAllCollisions((a, b) => { if (a.Intersects(b)) cb.Add((a, b)); });
+			var collidingSet = new HashSet<(ICollider, ICollider)>(cb);
+
 			stopWatch.Stop();
 
 			collisionTime.NewSample(stopWatch.Elapsed.TotalMilliseconds);
@@ -101,7 +108,7 @@ namespace Example
 		private readonly IColliderProvider scene;
 		private bool iterativeCollisionMethod;
 		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.Grid;
-		private uint _cellCount = 32;
+		private int _cellCount = 32;
 
 		private void AddSceneObjects()
 		{
@@ -112,7 +119,7 @@ namespace Example
 			}
 		}
 
-		public static void ExactCollision(HashSet<(ICollider, ICollider)> collidingSet, ICollider a, ICollider b)
+		public static void ExactCollision(ICollection<(ICollider, ICollider)> collidingSet, ICollider a, ICollider b)
 		{
 			if (a.Intersects(b))
 			{

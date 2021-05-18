@@ -23,14 +23,8 @@ namespace Collision
 			var cellCount = (int)MathF.Pow(2f, minLevel);
 			for (int level = minLevel; level <= maxLevel; ++level, cellCount *= 2)
 			{
-				var grid = new List<TCollider>[cellCount, cellCount];
-				for (int y = 0; y < cellCount; ++y)
-				{
-					for (int x = 0; x < cellCount; ++x)
-					{
-						grid[x, y] = new List<TCollider>();
-					}
-				}
+				var grid = new Grid<List<TCollider>>(cellCount, cellCount);
+				grid.ForEach((ref List<TCollider> cell) => cell = new List<TCollider>());
 				var cellSize = 2f / MathF.Pow(2, level);
 				multiGrid.Add((cellSize, grid));
 			}
@@ -50,15 +44,13 @@ namespace Collision
 
 		public void Add(TCollider collider)
 		{
-			void AddToGridLevel(List<TCollider>[,] grid)
+			void AddToGridLevel(Grid<List<TCollider>> grid)
 			{
 				var unitX = (collider.CenterX - MinX) / Size;
 				var unitY = (collider.CenterY - MinY) / Size;
-				var columns = grid.GetLength(0);
-				var rows = grid.GetLength(1);
 				//calculate grid column and row
-				var column = Math.Clamp((int)(unitX * columns), 0, columns - 1);
-				var row = Math.Clamp((int)(unitY * rows), 0, rows - 1);
+				var column = Math.Clamp((int)(unitX * grid.Columns), 0, grid.Columns - 1);
+				var row = Math.Clamp((int)(unitY * grid.Rows), 0, grid.Rows - 1);
 				grid[column, row].Add(collider);
 			}
 
@@ -81,10 +73,7 @@ namespace Collision
 		{
 			foreach(var (cellSize, grid) in multiGrid)
 			{
-				foreach(var cell in grid)
-				{
-					cell.Clear();
-				}
+				grid.ForEach((ref List<TCollider> cell) => cell.Clear());
 			}
 		}
 
@@ -94,9 +83,9 @@ namespace Collision
 			for (int level = MaxLevel; level >= MinLevel; --level)
 			{
 				var grid = GetGridLevel(level);
-				for (int y = 0; y < grid.GetLength(1); ++y)
+				for (int y = 0; y < grid.Rows; ++y)
 				{
-					for (int x = 0; x < grid.GetLength(0); ++x)
+					for (int x = 0; x < grid.Columns; ++x)
 					{
 						CheckCell(level, x, y, collisionHandler);
 					}
@@ -104,13 +93,13 @@ namespace Collision
 			}
 		}
 
-		public IEnumerable<IReadOnlyList<TCollider>[,]> Grids => multiGrid.Select(level => level.Item2);
+		public IEnumerable<IReadOnlyGrid<List<TCollider>>> Grids => multiGrid.Select(level => level.Item2);
 
-		public IReadOnlyList<TCollider>[,] GetGridLevel(int level) => multiGrid[level - MinLevel].Item2;
+		public IReadOnlyGrid<List<TCollider>> GetGridLevel(int level) => multiGrid[level - MinLevel].Item2;
 
-		private readonly List<(float, List<TCollider>[,])> multiGrid = new List<(float, List<TCollider>[,])>();
+		private readonly List<(float cellSize, Grid<List<TCollider>>)> multiGrid = new List<(float, Grid<List<TCollider>>)>();
 
-		private (float cellSize, List<TCollider>[,] grid) GetLevel(int level) => multiGrid[level - MinLevel];
+		private (float cellSize, Grid<List<TCollider>> grid) GetLevel(int level) => multiGrid[level - MinLevel];
 
 		private void CheckCell(int level, int x, int y, Action<TCollider, TCollider> collisionHandler)
 		{
@@ -137,12 +126,12 @@ namespace Collision
 				}
 
 				//check 4 neighbors (of 8) for instance 3 with bigger y and one with just bigger x
-				var existsBiggerX = x + 1 < grid.GetLength(0);
+				var existsBiggerX = x + 1 < grid.Columns;
 				if (existsBiggerX)
 				{
 					CheckCell(grid[x + 1, y]);
 				}
-				if (y + 1 < grid.GetLength(1))
+				if (y + 1 < grid.Rows)
 				{
 					CheckCell(grid[x, y + 1]);
 					if (existsBiggerX)
@@ -166,8 +155,8 @@ namespace Collision
 					CheckCell(biggerCell);
 					var minX = Math.Max(0, biggerX - 1);
 					var minY = Math.Max(0, biggerY - 1);
-					var maxX = Math.Min(lowResGrid.GetLength(0), biggerX + 2);
-					var maxY = Math.Min(lowResGrid.GetLength(1), biggerY + 2);
+					var maxX = Math.Min(lowResGrid.Columns, biggerX + 2);
+					var maxY = Math.Min(lowResGrid.Rows, biggerY + 2);
 					for (int row = minY; row < maxY; ++ row)
 					{
 						for (int column = minX; column < maxX; ++column)

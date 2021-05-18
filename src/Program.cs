@@ -25,7 +25,7 @@ namespace Example
 			window.SetKeyRepeatEnabled(false);
 			window.SetVerticalSyncEnabled(true);
 
-			var scene = new SceneAdapter(8000, 0.01f, 0.002f);
+			var scene = new SceneAdapter(8000, 0.007f, 0.004f);
 			var parameters = new Parameters();
 			var collisionDetection = new CollisionDetection(scene);
 			scene.OnChange += (_1, _2) => collisionDetection.Update();
@@ -50,7 +50,7 @@ namespace Example
 
 			var view = new View();
 			window.Resized += (_1, a) => view.Resize((int)a.Width, (int)a.Height);
-			window.Resized += (_1, a) => ui.Resize((int)a.Width, (int)a.Height);
+			//window.Resized += (_1, a) => ui.Resize((int)a.Width, (int)a.Height);
 
 			bool drawUi = true;
 			window.KeyPressed += (_1, a) =>

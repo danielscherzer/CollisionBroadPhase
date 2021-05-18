@@ -1,46 +1,37 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 
 namespace Collision
 {
 	public class CollisionGrid<TCollider> : ICollisionGrid<TCollider>, ICollisionMethodBroadPhase<TCollider> where TCollider : IBox2DCollider
 	{
-		public int CellCountX { get; }
-		public int CellCountY { get; }
+		public int CellCountX => _cells.Columns;
+		public int CellCountY => _cells.Rows;
 		public Vector2 CellSize { get; }
 		public float MinX { get; }
 		public float MinY { get; }
 
-		public IEnumerable<IReadOnlyList<TCollider>[,]> Grids
+		public IEnumerable<IReadOnlyGrid<List<TCollider>>> Grids
 		{
 			get
 			{
-				yield return GetGrid();
+				yield return _cells;
 			}
 		}
 
-		public CollisionGrid(float minX, float minY, float sizeX, float sizeY, uint cellCountX, uint cellCountY)
+		public CollisionGrid(float minX, float minY, float sizeX, float sizeY, int cellCountX, int cellCountY)
 		{
-			if (0 == cellCountX) throw new ArgumentOutOfRangeException(nameof(cellCountX));
-			if (0 == cellCountY) throw new ArgumentOutOfRangeException(nameof(cellCountY));
+			MinX = minX;
+			MinY = minY;
+			_cells = new Grid<List<TCollider>>(cellCountX, cellCountY);
 			if (0 >= sizeX) throw new ArgumentOutOfRangeException(nameof(sizeX));
 			if (0 >= sizeY) throw new ArgumentOutOfRangeException(nameof(sizeY));
 			CellSize = new Vector2(sizeX / cellCountX, sizeY / cellCountY);
-
-			cells = new List<TCollider>[cellCountX, cellCountY];
-			for (int y = 0; y < cellCountY; ++y)
-			{
-				for (int x = 0; x < cellCountX; ++x)
-				{
-					cells[x, y] = new List<TCollider>();
-				}
-			}
-
-			MinX = minX;
-			MinY = minY;
-			CellCountX = (int)cellCountX;
-			CellCountY = (int)cellCountY;
+			_cells.ForEach((ref List<TCollider> cell) => cell = new List<TCollider>());
 		}
 
 		public void Add(TCollider collider)
@@ -57,28 +48,27 @@ namespace Collision
 			{
 				for (int x = minX; x <= maxX; ++x)
 				{
-					cells[x, y].Add(collider);
+					_cells[x, y].Add(collider);
 				}
 			}
 		}
 
-		public void Clear()
-		{
-			foreach (var cell in cells)
-			{
-				cell.Clear();
-			}
-		}
+		public void Clear() => _cells.ForEach((ref List<TCollider> cell) => cell.Clear());
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
-			foreach (var cell in cells)
+			var partitions = Partitioner.Create(0, _cells.Array.Length);
+			Parallel.ForEach(partitions, range =>
 			{
-				CheckCell(collisionHandler, cell);
-			}
+				for (int i = range.Item1; i < range.Item2; i++)
+				{
+					CheckCell(collisionHandler, _cells.Array[i]);
+				}
+			});
+			//_cells.ForEach((ref List<TCollider> cell) => CheckCell(collisionHandler, cell));
 		}
 
-		private static void CheckCell(Action<TCollider, TCollider> collisionHandler, List<TCollider> cell)
+		private static void CheckCell(Action<TCollider, TCollider> collisionHandler, IReadOnlyList<TCollider> cell)
 		{
 			for (int i = 0; i + 1 < cell.Count; ++i)
 			{
@@ -90,9 +80,6 @@ namespace Collision
 			}
 		}
 
-		public IReadOnlyList<TCollider> this[int x, int y] { get { return cells[x, y]; } }
-		public IReadOnlyList<TCollider>[,] GetGrid() => cells;
-
-		private readonly List<TCollider>[,] cells;
+		private readonly Grid<List<TCollider>> _cells;
 	}
 }

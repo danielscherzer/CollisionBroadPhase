@@ -1,31 +1,49 @@
-﻿using System;
+﻿using Collision;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 
 namespace Example
 {
 	internal class Scene
 	{
-		public Scene(int objectCount, float objectMinSize, float objectSizeVariation)
+		public Scene(int objectCount, float objectMinRadius, float objectRadiusVariation)
 		{
 			randomNumber = new Random(12);
-			while (gameObjects.Count < objectCount)
+			GameObject CreateAsteroid(float centerX, float centerY)
 			{
-				gameObjects.Add(CreateAsteroid(objectMinSize, objectSizeVariation));
+				var radius = (float)randomNumber.NextDouble();
+				radius = MathF.Pow(radius, 8f); // more small ones than big ones
+				radius = radius * objectRadiusVariation + objectMinRadius;
+				var newAsteroid = new GameObject(centerX, centerY, radius)
+				{
+					Velocity = RandomVelocity
+				};
+				return newAsteroid;
 			}
-		}
 
-		private GameObject CreateAsteroid(float objectMinSize, float objectSizeVariation)
-		{
-			var center = RandomVector();
-			var radius = (float)randomNumber.NextDouble();
-			radius = MathF.Pow(radius, 8f); // more small ones than big ones
-			radius = radius * objectSizeVariation + objectMinSize;
-			var newAsteroid = new GameObject(center.X, center.Y, radius)
+			// need row/column number that at least allows grid to contain <objectCount> elements
+			var countSqrt = (int)MathF.Ceiling(MathF.Sqrt(objectCount));
+			var circles = new List<Circle>(objectCount);
+
+			var delta = 2f / countSqrt;
+			var min = -1f + 0.5f * delta;
+			// create a grid of non overlapping minimal sized objects
+			for (int i = 0; i < objectCount; ++i)
 			{
-				Velocity = RandomVelocity
-			};
-			return newAsteroid;
+				var column = i % countSqrt;
+				var row = i / countSqrt;
+				var x = min + delta * column;
+				var y = min + delta * row;
+				var circle = new Circle(x, y, objectMinRadius);
+				circles.Add(circle);
+			}
+			// try to grow them as long as no overlap
+			gameObjects = circles
+				.OrderBy(item => randomNumber.Next())
+				.Select(circle => CreateAsteroid(circle.CenterX, circle.CenterY))
+				.ToList();
 		}
 
 		public IReadOnlyList<GameObject> GameObjects => gameObjects;
@@ -36,15 +54,23 @@ namespace Example
 		/// Scene update. Should be called once a frame: Moves all objects.
 		/// <param name="frameTime">Time in seconds since the last update.</param>
 		/// </summary>
-		public void Update(float frameTime)
+		public void Update(float frameTime) => gameObjects.ForEach(obj => obj.Update(frameTime));
+
+		private struct Circle : ICircle2dCollider
 		{
-			foreach (var obj in gameObjects)
+			public Circle(float centerX, float centerY, float radius)
 			{
-				obj.Update(frameTime);
+				CenterX = centerX;
+				CenterY = centerY;
+				Radius = radius;
 			}
+
+			public float CenterX { get; set; }
+			public float CenterY { get; set; }
+			public float Radius { get; set; }
 		}
 
-		private readonly List<GameObject> gameObjects = new List<GameObject>();
+		private readonly List<GameObject> gameObjects = new();
 		private readonly Random randomNumber;
 
 		private Vector2 RandomVector()

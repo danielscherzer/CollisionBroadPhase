@@ -34,12 +34,12 @@ namespace CollisionBroadPhase.Test
 		[TestMethod]
 		public void CellCount()
 		{
-			for (uint cellCountX = 1u; cellCountX < 20; ++cellCountX)
+			for (int cellCountX = 1; cellCountX < 20; ++cellCountX)
 			{
-				for (uint cellCountY = 1u; cellCountY < 20; ++cellCountY)
+				for (int cellCountY = 1; cellCountY < 20; ++cellCountY)
 				{
 					var grid = new CollisionGrid<GameObject>(-1, -1, 2, 2, cellCountX, cellCountY);
-					Assert.AreEqual((uint)grid.GetGrid().Length, cellCountX * cellCountY);
+					Assert.AreEqual(grid.CellCountX * grid.CellCountY, cellCountX * cellCountY);
 				}
 			}
 		}

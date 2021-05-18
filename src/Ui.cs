@@ -1,4 +1,5 @@
-﻿using SFML.Graphics;
+﻿using Collision;
+using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 using System;
@@ -25,9 +26,9 @@ namespace Example
 			}
 		}
 
-		public void AddCountGrid(IReadOnlyList<object>[,] grid)
+		public void AddCountGrid<T>(IReadOnlyGrid<List<T>> grid)
 		{
-			var uiGrid = new PullUiGrid((uint)grid.GetLength(0), (uint)grid.GetLength(1)
+			var uiGrid = new PullUiGrid((uint)grid.Columns, (uint)grid.Rows
 				, new Vector2f(0, 0), (Vector2f)window.Size, colors[currentColorId], font
 				, (col, row) => GetCellString(grid, col, row));
 
@@ -53,9 +54,9 @@ namespace Example
 			currentColorId = 0;
 		}
 
-		internal void Resize(int width, int height)
-		{
-		}
+		//internal void Resize(int width, int height)
+		//{
+		//}
 
 		public void Draw()
 		{
@@ -88,7 +89,7 @@ namespace Example
 		private readonly List<UiPropertyGrid> propGrids = new List<UiPropertyGrid>();
 		private static readonly Color[] colors = new Color[] { Color.White, Color.Blue, Color.Yellow, Color.Green, Color.Magenta, Color.Red };
 
-		private static string GetCellString(IReadOnlyList<object>[,] grid, int column, int row)
+		private static string GetCellString<T>(IReadOnlyGrid<List<T>> grid, int column, int row)
 		{
 			var count = grid[column, row].Count;
 			return 0 == count ? "" : count.ToString();
