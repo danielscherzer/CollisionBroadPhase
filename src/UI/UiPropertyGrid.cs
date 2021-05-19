@@ -6,25 +6,27 @@ using System.Linq;
 using System.Reflection;
 using Zenseless.Patterns;
 
-namespace UI
+namespace Example.UI
 {
 	internal class UiPropertyGrid : Disposable, Drawable, IRectangleShape
 	{
-		public UiPropertyGrid(Vector2f position, Font font)
+		public UiPropertyGrid(Vector2f position, Font font, IStyle style)
 		{
 			border = 5f;
 			background = new RectangleShape
 			{
-				FillColor = new Color(30, 30, 30),
-				OutlineColor = new Color(60, 60, 80),
-				OutlineThickness = 3,
+				FillColor = style.UiFill,
+				OutlineColor = style.UiOutline,
+				OutlineThickness = style.UiOutlineThickness,
 				Position = position,
 			};
 			textBlueprint = new Text("test", font)
 			{
-				LineSpacing = 1.2f,
+				FillColor = style.Text,
+				LineSpacing = style.UiLineSpacing,
 				Position = background.Position + new Vector2f(border, border),
 			};
+			InactiveColor = style.TextInactive;
 		}
 
 		public void AddProperties(object obj)
@@ -50,7 +52,7 @@ namespace UI
 				var text = new Text(textBlueprint) { DisplayedString = property.GetValue(obj)?.ToString() };
 				if (property.GetSetMethod() is null)
 				{
-					text.FillColor = new Color(180, 180, 180);
+					text.FillColor = InactiveColor;
 				}
 				text.Position = position;
 				position.Y += text.CharacterSize * text.LineSpacing;
@@ -84,9 +86,12 @@ namespace UI
 
 		private readonly float border;
 		private readonly Text textBlueprint;
+
+		public Color InactiveColor { get; }
+
 		private readonly RectangleShape background;
-		private readonly List<Text> texts = new List<Text>();
-		private readonly List<(Text, PropertyInfo, object)> properties = new List<(Text, PropertyInfo, object)>();
+		private readonly List<Text> texts = new();
+		private readonly List<(Text, PropertyInfo, object)> properties = new();
 
 		private void ExpandBackground(FloatRect bounds)
 		{
@@ -96,7 +101,7 @@ namespace UI
 			background.Size = new Vector2f(combi.Width, combi.Height);
 		}
 
-		private FloatRect Combine(FloatRect a, FloatRect b)
+		private static FloatRect Combine(FloatRect a, FloatRect b)
 		{
 			var left = Math.Min(a.Left, b.Left);
 			var top = Math.Min(a.Top, b.Top);

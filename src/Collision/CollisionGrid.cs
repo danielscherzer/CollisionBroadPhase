@@ -58,14 +58,14 @@ namespace Collision
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
 			var partitions = Partitioner.Create(0, _cells.Array.Length);
-			Parallel.ForEach(partitions, range =>
-			{
-				for (int i = range.Item1; i < range.Item2; i++)
-				{
-					CheckCell(collisionHandler, _cells.Array[i]);
-				}
-			});
-			//_cells.ForEach((ref List<TCollider> cell) => CheckCell(collisionHandler, cell));
+			//Parallel.ForEach(partitions, range =>
+			//{
+			//	for (int i = range.Item1; i < range.Item2; i++)
+			//	{
+			//		CheckCell(collisionHandler, _cells.Array[i]);
+			//	}
+			//});
+			_cells.ForEach((ref List<TCollider> cell) => CheckCell(collisionHandler, cell));
 		}
 
 		private static void CheckCell(Action<TCollider, TCollider> collisionHandler, IReadOnlyList<TCollider> cell)

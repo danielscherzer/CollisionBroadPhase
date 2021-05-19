@@ -1,6 +1,6 @@
 ﻿using SFML.System;
 
-namespace UI
+namespace Example.UI
 {
 	internal interface IRectangleShape
 	{

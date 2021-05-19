@@ -30,7 +30,9 @@ namespace Example
 			var collisionDetection = new CollisionDetection(scene);
 			scene.OnChange += (_1, _2) => collisionDetection.Update();
 
-			var ui = new Ui(window);
+			var style = new LightStyle();
+
+			var ui = new Ui(window, style);
 			void RecreateUi()
 			{
 				ui.Clear();
@@ -48,17 +50,19 @@ namespace Example
 			RecreateUi();
 			collisionDetection.OnUpdate += (_1, _2) => RecreateUi();
 
-			var view = new View();
-			window.Resized += (_1, a) => view.Resize((int)a.Width, (int)a.Height);
+			var view = new View(style);
+			window.Resized += (_1, a) => View.Resize((int)a.Width, (int)a.Height);
 			//window.Resized += (_1, a) => ui.Resize((int)a.Width, (int)a.Height);
 
 			bool drawUi = true;
+			bool drawVisualization = true;
 			window.KeyPressed += (_1, a) =>
 			{
 				switch(a.Code)
 				{
 					case Keyboard.Key.Escape: window.Close(); break;
 					case Keyboard.Key.Tab: drawUi = !drawUi; break;
+					case Keyboard.Key.V: drawVisualization = !drawVisualization; break;
 				}
 			};
 
@@ -89,7 +93,8 @@ namespace Example
 				view.Draw(scene.Collider, highlight, parameters.DebugAlgo);
 
 				window.PushGLStates();
-				if(drawUi) ui.Draw();
+				if (drawVisualization) ui.DrawVisualization();
+				if (drawUi) ui.DrawUi();
 				window.PopGLStates();
 				window.Display(); //buffer swap for double buffering and wait for next frame
 			}

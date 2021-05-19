@@ -1,4 +1,5 @@
 using Collision;
+using Example.UI;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using System;
@@ -11,9 +12,9 @@ namespace Example
 	/// </summary>
 	internal class View
 	{
-		public View()
+		public View(IStyle style)
 		{
-			GL.ClearColor(Color4.Black);
+			GL.ClearColor(style.Background);
 			var asteroidPoints = CreateAsteroidPoints();
 			asteroidVertexCount = asteroidPoints.Count;
 			var array = asteroidPoints.ToArray(); //create an array (data is guarantied to be consecutive in memory
@@ -34,12 +35,13 @@ namespace Example
 			GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 0, 0); // specify what our buffer contains
 			GL.BindVertexArray(0); // deactivate vertex array; state storing is stopped;
 			GL.BindBuffer(BufferTarget.ArrayBuffer, 0); // deactivate buffer; just to be on the cautious side;
+			Style = style;
 		}
 
 		/// <summary>
 		/// Responsible for reacting on a window resize
 		/// </summary>
-		internal void Resize(int width, int height)
+		internal static void Resize(int width, int height)
 		{
 			GL.Viewport(0, 0, width, height); // tell OpenGL to use the whole window for drawing
 		}
@@ -47,18 +49,18 @@ namespace Example
 		internal void Draw(IEnumerable<ICircle2dCollider> gameObjects, IEnumerable<ICircle2dCollider> highlightGameObjects, bool fillHighlighted = false)
 		{
 			GL.Clear(ClearBufferMask.ColorBufferBit);
-			GL.Color4(Color4.Gray);
+			GL.Color4(Style.ObjectFill);
 			GL.BindVertexArray(vertexArray); // activate vertex array
 			foreach (var asteroid in gameObjects)
 			{
 				DrawAsteroid(asteroid.CenterX, asteroid.CenterY, asteroid.Radius);
 			}
-			GL.Color4(Color4.DarkGray);
+			GL.Color4(Style.ObjectBorder);
 			foreach (var asteroid in gameObjects)
 			{
 				DrawAsteroid(asteroid.CenterX, asteroid.CenterY, asteroid.Radius, PrimitiveType.LineLoop);
 			}
-			GL.Color4(Color4.Red);
+			GL.Color4(Style.Accent);
 			foreach (var error in highlightGameObjects)
 			{
 				DrawAsteroid(error.CenterX, error.CenterY, error.Radius, fillHighlighted ? PrimitiveType.TriangleFan : PrimitiveType.LineLoop);
@@ -68,6 +70,8 @@ namespace Example
 
 		private readonly int vertexArray;
 		private readonly int asteroidVertexCount;
+
+		public IStyle Style { get; }
 
 		/// <summary>
 		/// Creates points along a circle, but for each point the radius of the circle is varied by a random variable.

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using UI;
+using Example.UI;
 using Zenseless.Patterns;
 
 namespace Example
@@ -23,14 +23,14 @@ namespace Example
 		public int CellCount
 		{
 			get => _cellCount;
-			set => SetNotify(ref _cellCount, value, cellCount => Update());
+			set => Set(ref _cellCount, value, cellCount => Update());
 		}
 
 		public enum CollisionMethodTypes { BruteForce, Grid, PersistentSAP, SAP_X, MultiGrid };
 		public CollisionMethodTypes CollisionMethod
 		{
 			get => _collisionMethod;
-			set => SetNotify(ref _collisionMethod, value, method => Update());
+			set => Set(ref _collisionMethod, value, method => Update());
 		}
 
 		internal void Update()
@@ -104,7 +104,7 @@ namespace Example
 			return collidingSet;
 		}
 
-		private readonly ExponentialSmoothing collisionTime = new ExponentialSmoothing(0.01);
+		private readonly ExponentialSmoothing collisionTime = new(0.01);
 		private readonly IColliderProvider scene;
 		private bool iterativeCollisionMethod;
 		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.Grid;

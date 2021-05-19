@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
-using UI;
+using Example.UI;
 using Zenseless.Patterns;
 
 namespace Example
@@ -23,13 +23,13 @@ namespace Example
 		public float MovingObjectPercentage
 		{
 			get => _movingObjectPercentage;
-			set => SetNotify(ref _movingObjectPercentage, value, SetMovingObjectPercentage);
+			set => Set(ref _movingObjectPercentage, value, SetMovingObjectPercentage);
 		}
 
 		public bool Freeze
 		{
 			get => _freeze;
-			set => SetNotify(ref _freeze, value);
+			set => Set(ref _freeze, value);
 		}
 
 		[UiIgnore]
@@ -40,21 +40,21 @@ namespace Example
 		public int ObjectCount
 		{
 			get => _objectCount;
-			set => SetNotify(ref _objectCount, value, _ => Recreate());
+			set => Set(ref _objectCount, value, _ => Recreate());
 		}
 
 		[UiValueChangeFunction(0, 1.1)]
 		public float ObjectMinSize
 		{
 			get => _objectMinSize;
-			set => SetNotify(ref _objectMinSize, value, _ => Recreate());
+			set => Set(ref _objectMinSize, value, _ => Recreate());
 		}
 
 		[UiValueChangeFunction(0, 1.1)]
 		public float ObjectSizeVariation
 		{
 			get => _objectSizeVariation;
-			set => SetNotify(ref _objectSizeVariation, value, _ => Recreate());
+			set => Set(ref _objectSizeVariation, value, _ => Recreate());
 		}
 
 		public event EventHandler OnChange;

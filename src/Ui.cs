@@ -1,21 +1,22 @@
 ﻿using Collision;
+using Example.UI;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 using System;
 using System.Collections.Generic;
-using UI;
 using Zenseless.Patterns;
 
 namespace Example
 {
 	internal class Ui : Disposable
 	{
-		public Ui(RenderWindow window)
+		public Ui(RenderWindow window, IStyle style)
 		{
 			font = new Font("Content/sansation.ttf");
 			window.MouseButtonReleased += Window_MouseButtonReleased;
 			this.window = window;
+			this.style = style;
 		}
 
 		private void Window_MouseButtonReleased(object sender, MouseButtonEventArgs e)
@@ -29,18 +30,18 @@ namespace Example
 		public void AddCountGrid<T>(IReadOnlyGrid<List<T>> grid)
 		{
 			var uiGrid = new PullUiGrid((uint)grid.Columns, (uint)grid.Rows
-				, new Vector2f(0, 0), (Vector2f)window.Size, colors[currentColorId], font
+				, new Vector2f(0, 0), (Vector2f)window.Size, style.VisualLevel[currentColorId], font
 				, (col, row) => GetCellString(grid, col, row));
 
 			drawables.Add(uiGrid);
 
 			++currentColorId;
-			currentColorId %= colors.Length;
+			currentColorId %= style.VisualLevel.Length;
 		}
 
 		public void AddPropertyGrid(object obj)
 		{
-			var propGrid = new UiPropertyGrid(new Vector2f(10, currentY + 10), font);
+			var propGrid = new UiPropertyGrid(new Vector2f(10, currentY + 10), font, style);
 			propGrid.AddProperties(obj);
 			propGrids.Add(propGrid);
 			currentY = propGrid.Position.Y + propGrid.Size.Y;
@@ -58,15 +59,19 @@ namespace Example
 		//{
 		//}
 
-		public void Draw()
+		public void DrawUi()
 		{
-			foreach(var drawable in drawables)
-			{
-				window.Draw(drawable);
-			}
 			foreach (var propGrid in propGrids)
 			{
 				window.Draw(propGrid);
+			}
+		}
+
+		public void DrawVisualization()
+		{
+			foreach (var drawable in drawables)
+			{
+				window.Draw(drawable);
 			}
 		}
 
@@ -85,9 +90,9 @@ namespace Example
 		private int currentColorId = 0;
 		private readonly Font font;
 		private readonly RenderWindow window;
-		private readonly List<Drawable> drawables = new List<Drawable>();
-		private readonly List<UiPropertyGrid> propGrids = new List<UiPropertyGrid>();
-		private static readonly Color[] colors = new Color[] { Color.White, Color.Blue, Color.Yellow, Color.Green, Color.Magenta, Color.Red };
+		private readonly IStyle style;
+		private readonly List<Drawable> drawables = new();
+		private readonly List<UiPropertyGrid> propGrids = new();
 
 		private static string GetCellString<T>(IReadOnlyGrid<List<T>> grid, int column, int row)
 		{

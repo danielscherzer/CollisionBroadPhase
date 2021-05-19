@@ -7,13 +7,13 @@ namespace Example
 		public bool CollisionDetection
 		{
 			get => _collisionDetection;
-			set => SetNotify(ref _collisionDetection, value);
+			set => Set(ref _collisionDetection, value);
 		}
 
 		public bool DebugAlgo
 		{
 			get => _debugAlgo;
-			set => SetNotify(ref _debugAlgo, value);
+			set => Set(ref _debugAlgo, value);
 		}
 
 		private bool _collisionDetection = true;

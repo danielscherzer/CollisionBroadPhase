@@ -1,7 +1,7 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 
-namespace UI
+namespace Example.UI
 {
 	internal class UiGrid : Transformable, Drawable, IRectangleShape
 	{
