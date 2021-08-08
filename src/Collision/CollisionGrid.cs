@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using Zenseless.Spatial;
 
 namespace Collision
 {
@@ -31,7 +32,7 @@ namespace Collision
 			if (0 >= sizeX) throw new ArgumentOutOfRangeException(nameof(sizeX));
 			if (0 >= sizeY) throw new ArgumentOutOfRangeException(nameof(sizeY));
 			CellSize = new Vector2(sizeX / cellCountX, sizeY / cellCountY);
-			_cells.ForEach((ref List<TCollider> cell) => cell = new List<TCollider>());
+			_cells.ForEach(() => new List<TCollider>());
 		}
 
 		public void Add(TCollider collider)
@@ -53,11 +54,11 @@ namespace Collision
 			}
 		}
 
-		public void Clear() => _cells.ForEach((ref List<TCollider> cell) => cell.Clear());
+		public void Clear() => _cells.ForEach(cell => cell.Clear());
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
-			var partitions = Partitioner.Create(0, _cells.Array.Length);
+			var partitions = Partitioner.Create(0, _cells.AsReadOnly.Count);
 			//Parallel.ForEach(partitions, range =>
 			//{
 			//	for (int i = range.Item1; i < range.Item2; i++)
@@ -65,7 +66,7 @@ namespace Collision
 			//		CheckCell(collisionHandler, _cells.Array[i]);
 			//	}
 			//});
-			_cells.ForEach((ref List<TCollider> cell) => CheckCell(collisionHandler, cell));
+			_cells.ForEach(cell => CheckCell(collisionHandler, cell));
 		}
 
 		private static void CheckCell(Action<TCollider, TCollider> collisionHandler, IReadOnlyList<TCollider> cell)

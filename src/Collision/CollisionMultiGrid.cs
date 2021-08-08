@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Zenseless.Spatial;
 
 namespace Collision
 {
@@ -24,7 +25,7 @@ namespace Collision
 			for (int level = minLevel; level <= maxLevel; ++level, cellCount *= 2)
 			{
 				var grid = new Grid<List<TCollider>>(cellCount, cellCount);
-				grid.ForEach((ref List<TCollider> cell) => cell = new List<TCollider>());
+				grid.ForEach(() => new List<TCollider>());
 				var cellSize = 2f / MathF.Pow(2, level);
 				multiGrid.Add((cellSize, grid));
 			}
@@ -73,7 +74,7 @@ namespace Collision
 		{
 			foreach(var (cellSize, grid) in multiGrid)
 			{
-				grid.ForEach((ref List<TCollider> cell) => cell.Clear());
+				grid.ForEach(cell => cell.Clear());
 			}
 		}
 
@@ -97,7 +98,7 @@ namespace Collision
 
 		public IReadOnlyGrid<List<TCollider>> GetGridLevel(int level) => multiGrid[level - MinLevel].Item2;
 
-		private readonly List<(float cellSize, Grid<List<TCollider>>)> multiGrid = new List<(float, Grid<List<TCollider>>)>();
+		private readonly List<(float cellSize, Grid<List<TCollider>>)> multiGrid = new();
 
 		private (float cellSize, Grid<List<TCollider>> grid) GetLevel(int level) => multiGrid[level - MinLevel];
 

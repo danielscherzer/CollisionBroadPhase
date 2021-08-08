@@ -6,6 +6,7 @@ using SFML.Window;
 using System;
 using System.Collections.Generic;
 using Zenseless.Patterns;
+using Zenseless.Spatial;
 
 namespace Example
 {
