@@ -4,12 +4,12 @@ using System;
 
 namespace Example.UI
 {
-	internal class PullUiGrid :  Transformable, Drawable, IRectangleShape
+	internal class PullUiGrid : Transformable, Drawable, IRectangleShape
 	{
 		private readonly UiGrid uiGrid;
 		private readonly Func<int, int, string> getCellString;
 
-		public PullUiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color, Font font, Func<int, int, string> getCellString) 
+		public PullUiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color, Font font, Func<int, int, string> getCellString)
 		{
 			uiGrid = new UiGrid(columns, rows, position, size, color, font);
 			this.getCellString = getCellString ?? throw new ArgumentNullException(nameof(getCellString));

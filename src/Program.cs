@@ -17,7 +17,7 @@ namespace Example
 			var gameWindow = new GameWindow(GameWindowSettings.Default, new NativeWindowSettings { Profile = ContextProfile.Compatability })
 			{
 				IsVisible = false
-			}; 
+			};
 			// required before RenderWindow construction for OpenGL use
 			var window = new RenderWindow(new VideoMode(size, size), "Collision Grid");
 
@@ -58,7 +58,7 @@ namespace Example
 			bool drawVisualization = true;
 			window.KeyPressed += (_1, a) =>
 			{
-				switch(a.Code)
+				switch (a.Code)
 				{
 					case Keyboard.Key.Escape: window.Close(); break;
 					case Keyboard.Key.Tab: drawUi = !drawUi; break;

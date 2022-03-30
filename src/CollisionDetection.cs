@@ -1,9 +1,9 @@
 using Collision;
+using Example.UI;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Example.UI;
 using Zenseless.Patterns;
 
 namespace Example
@@ -39,7 +39,7 @@ namespace Example
 			//SAP only usable if iterative so do not add/delete GameObjects without adding/removing them from the SAP structure too!
 			collisionTime.Clear();
 			iterativeCollisionMethod = false;
-			switch(CollisionMethod)
+			switch (CollisionMethod)
 			{
 				case CollisionMethodTypes.BruteForce:
 					Algorithm = new CollisionBruteForce<ICollider>();
@@ -61,9 +61,9 @@ namespace Example
 					Algorithm = new CollisionPersistentSAP<ICollider>();
 					iterativeCollisionMethod = true;
 					break;
-				default: throw new ArgumentOutOfRangeException($"Collision method {CollisionMethod} unknown");
+				default: throw new ArgumentException($"Collision method {CollisionMethod} unknown");
 			}
-			if(iterativeCollisionMethod)
+			if (iterativeCollisionMethod)
 			{
 				AddSceneObjects();
 			}

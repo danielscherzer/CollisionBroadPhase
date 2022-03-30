@@ -23,7 +23,7 @@ namespace Collision
 
 		private void UpdateBounds()
 		{
-			foreach(var bound in boundsX)
+			foreach (var bound in boundsX)
 			{
 				bound.UpdateValue();
 			}
@@ -34,9 +34,9 @@ namespace Collision
 		{
 			UpdateBounds();
 			var activeBounds = new HashSet<TCollider>();
-			foreach(var bound in boundsX)
+			foreach (var bound in boundsX)
 			{
-				switch(bound)
+				switch (bound)
 				{
 					case LowerXBound lower:
 						// only add starting colliders to active list

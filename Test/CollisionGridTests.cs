@@ -13,22 +13,22 @@ namespace CollisionBroadPhase.Test
 		[TestMethod]
 		public void CellCount0()
 		{
-			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 0, 1));
-			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 1, 0));
+			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 0, 1));
+			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 1, 0));
 		}
 
 		[TestMethod]
 		public void SizeNegative()
 		{
-			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, -2, 2, 1, 1));
-			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, 2, -2, 1, 1));
+			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, -2, 2, 1, 1));
+			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, 2, -2, 1, 1));
 		}
 
 		[TestMethod]
 		public void Size0()
 		{
-			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 0, 1, 1));
-			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, 0, 2, 1, 1));
+			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 0, 1, 1));
+			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, 0, 2, 1, 1));
 		}
 
 		[TestMethod]
@@ -49,11 +49,11 @@ namespace CollisionBroadPhase.Test
 		{
 			var grid = new CollisionGrid<GameObject>(-1, -1, 2, 2, 1, 1);
 			grid.FindAllCollisions((_, __) => Assert.Fail());
-			
+
 			var a = new GameObject(0, 0, 0.01f);
 			grid.Add(a);
 			grid.FindAllCollisions((_, __) => Assert.Fail());
-			
+
 			grid.Add(a);
 			grid.FindAllCollisions((c1, c2) => Assert.AreEqual((a, a), (c1, c2)));
 
@@ -92,12 +92,12 @@ namespace CollisionBroadPhase.Test
 		public void FindAllCollisions(GameObject[] gameObjects, (int, int)[] collidingIds)
 		{
 			var grid = new CollisionGrid<GameObject>(-1, -1, 2, 2, 1, 1);
-			foreach(var gameObject in gameObjects) grid.Add(gameObject);
+			foreach (var gameObject in gameObjects) grid.Add(gameObject);
 
 			var expected = new HashSet<(ICollider, ICollider)>();
 			var result = new HashSet<(ICollider, ICollider)>();
 			foreach ((int a, int b) in collidingIds) AddOrdererdPair(expected, gameObjects[a], gameObjects[b]);
-			grid.FindAllCollisions((c1, c2) => CollisionDetection.ExactCollision(result,c1, c2));
+			grid.FindAllCollisions((c1, c2) => CollisionDetection.ExactCollision(result, c1, c2));
 			CollectionAssert.AreEqual(expected.ToList(), result.ToList(), $"\n\tExpected={Print(expected)}\n\tActual={Print(result)}");
 		}
 	}

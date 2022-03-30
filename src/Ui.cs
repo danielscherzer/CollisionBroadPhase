@@ -1,5 +1,4 @@
-﻿using Collision;
-using Example.UI;
+﻿using Example.UI;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;

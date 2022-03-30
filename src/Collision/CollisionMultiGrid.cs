@@ -72,7 +72,7 @@ namespace Collision
 
 		public void Clear()
 		{
-			foreach(var (cellSize, grid) in multiGrid)
+			foreach (var (cellSize, grid) in multiGrid)
 			{
 				grid.ForEach(cell => cell.Clear());
 			}
@@ -158,7 +158,7 @@ namespace Collision
 					var minY = Math.Max(0, biggerY - 1);
 					var maxX = Math.Min(lowResGrid.Columns, biggerX + 2);
 					var maxY = Math.Min(lowResGrid.Rows, biggerY + 2);
-					for (int row = minY; row < maxY; ++ row)
+					for (int row = minY; row < maxY; ++row)
 					{
 						for (int column = minX; column < maxX; ++column)
 						{

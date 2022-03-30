@@ -1,7 +1,7 @@
-﻿using System;
+﻿using Example.UI;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Example.UI;
 using Zenseless.Patterns;
 
 namespace Example
@@ -77,7 +77,7 @@ namespace Example
 		{
 			_movingObjectPercentage = MathF.Min(1f, MathF.Max(MathF.Round(percentage, 3), 0f));
 			var movingObjects = (int)(_movingObjectPercentage * ObjectCount);
-			foreach(var gameObject in _immutableScene.GameObjects)
+			foreach (var gameObject in _immutableScene.GameObjects)
 			{
 				gameObject.Velocity = (movingObjects >= 0) ? _immutableScene.RandomVelocity : Vector2.Zero;
 				--movingObjects;

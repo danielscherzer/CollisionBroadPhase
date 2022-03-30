@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
 using Zenseless.Spatial;
 
 namespace Collision
@@ -29,8 +27,8 @@ namespace Collision
 			MinX = minX;
 			MinY = minY;
 			_cells = new Grid<List<TCollider>>(cellCountX, cellCountY);
-			if (0 >= sizeX) throw new ArgumentOutOfRangeException(nameof(sizeX));
-			if (0 >= sizeY) throw new ArgumentOutOfRangeException(nameof(sizeY));
+			if (0 >= sizeX) throw new ArgumentException(nameof(sizeX));
+			if (0 >= sizeY) throw new ArgumentException(nameof(sizeY));
 			CellSize = new Vector2(sizeX / cellCountX, sizeY / cellCountY);
 			_cells.ForEach(() => new List<TCollider>());
 		}

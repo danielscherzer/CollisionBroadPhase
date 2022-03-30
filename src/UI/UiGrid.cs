@@ -14,7 +14,7 @@ namespace Example.UI
 			vertices = new VertexArray(PrimitiveType.Lines);
 			var deltaX = new Vector2f(size.X / columns, 0f);
 			var deltaY = new Vector2f(0f, size.Y / rows);
-			for(int column = 0; column < columns; ++column)
+			for (int column = 0; column < columns; ++column)
 			{
 				for (int row = 0; row < rows; ++row)
 				{
@@ -77,7 +77,7 @@ namespace Example.UI
 		{
 			base.Destroy(disposing);
 			vertices.Dispose();
-			foreach(var text in cellTexts)
+			foreach (var text in cellTexts)
 			{
 				text.Dispose();
 			}

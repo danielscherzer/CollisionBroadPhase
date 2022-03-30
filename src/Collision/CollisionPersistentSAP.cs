@@ -197,7 +197,7 @@ namespace Collision
 
 			bounds.Sort(Comparer);
 			var activeBounds = new HashSet<TCollider>(); // only called if many objects added at once
-			foreach(var bound in bounds)
+			foreach (var bound in bounds)
 			{
 				if (bound.IsLowerBound)
 				{
