@@ -13,8 +13,8 @@ namespace CollisionBroadPhase.Test
 		[TestMethod]
 		public void CellCount0()
 		{
-			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 0, 1));
-			Assert.ThrowsException<ArgumentException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 1, 0));
+			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 0, 1));
+			Assert.ThrowsException<ArgumentOutOfRangeException>(() => new CollisionGrid<GameObject>(-1, -1, 2, 2, 1, 0));
 		}
 
 		[TestMethod]

@@ -1,4 +1,4 @@
-﻿using Zenseless.Patterns;
+﻿using Zenseless.Patterns.Property;
 
 namespace Example
 {

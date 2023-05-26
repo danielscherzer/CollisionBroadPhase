@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Numerics;
 using Zenseless.Spatial;
@@ -56,7 +55,7 @@ namespace Collision
 
 		public void FindAllCollisions(Action<TCollider, TCollider> collisionHandler)
 		{
-			var partitions = Partitioner.Create(0, _cells.AsReadOnly.Count);
+			//var partitions = Partitioner.Create(0, _cells.AsReadOnly.Count);
 			//Parallel.ForEach(partitions, range =>
 			//{
 			//	for (int i = range.Item1; i < range.Item2; i++)

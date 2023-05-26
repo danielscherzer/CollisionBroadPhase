@@ -4,7 +4,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Zenseless.Patterns;
+using Zenseless.Patterns.Property;
 
 namespace Example
 {
@@ -35,9 +35,10 @@ namespace Example
 
 		internal void Update()
 		{
+			timeSum = 0;
+			timeCount = -5;
 			CollisionCount = 0;
 			//SAP only usable if iterative so do not add/delete GameObjects without adding/removing them from the SAP structure too!
-			collisionTime.Clear();
 			iterativeCollisionMethod = false;
 			switch (CollisionMethod)
 			{
@@ -93,8 +94,12 @@ namespace Example
 
 			stopWatch.Stop();
 
-			collisionTime.NewSample(stopWatch.Elapsed.TotalMilliseconds);
-			CollisionTimeMsec = (float)Math.Round(collisionTime.SmoothedValue, 2);
+			timeCount++;
+			if (timeCount > 0)
+			{
+				timeSum += stopWatch.Elapsed.TotalMilliseconds;
+				CollisionTimeMsec = (float)Math.Round(timeSum / timeCount, 2);
+			}
 			foreach (var (collider1, collider2) in collidingSet)
 			{
 				collider1.HandleCollision(collider2);
@@ -104,11 +109,12 @@ namespace Example
 			return collidingSet;
 		}
 
-		private readonly ExponentialSmoothing collisionTime = new(0.01);
 		private readonly IColliderProvider scene;
 		private bool iterativeCollisionMethod;
 		private CollisionMethodTypes _collisionMethod = CollisionMethodTypes.Grid;
 		private int _cellCount = 32;
+		private double timeSum;
+		private int timeCount;
 
 		private void AddSceneObjects()
 		{

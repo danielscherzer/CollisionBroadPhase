@@ -140,7 +140,7 @@ namespace Collision
 			}
 
 			public override int GetHashCode()
-			{
+			{   //TODO: hashcode.combine
 				return A.GetHashCode() + B.GetHashCode();
 			}
 		}

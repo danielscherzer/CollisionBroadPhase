@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
-using Zenseless.Patterns;
+using Zenseless.Patterns.Property;
 
 namespace Example
 {

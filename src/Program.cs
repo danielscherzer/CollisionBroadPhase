@@ -1,11 +1,11 @@
 ﻿using Collision;
-using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using SFML.Graphics;
 using SFML.System;
 using SFML.Window;
 using System.Collections.Generic;
 using System.Linq;
+using Zenseless.OpenTK;
 
 namespace Example
 {
@@ -14,7 +14,7 @@ namespace Example
 		private static void Main(string[] _)
 		{
 			var size = (uint)(VideoMode.DesktopMode.Height * 0.8f);
-			var gameWindow = new GameWindow(GameWindowSettings.Default, new NativeWindowSettings { Profile = ContextProfile.Compatability })
+			var gameWindow = new GameWindow(GameWindowSettings.Default, ImmediateMode.NativeWindowSettings)
 			{
 				IsVisible = false
 			};
