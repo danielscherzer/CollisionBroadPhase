@@ -4,6 +4,7 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace Example
 {
@@ -17,8 +18,6 @@ namespace Example
 			GL.ClearColor(style.Background);
 			var asteroidPoints = CreateAsteroidPoints();
 			asteroidVertexCount = asteroidPoints.Count;
-			var array = asteroidPoints.ToArray(); //create an array (data is guarantied to be consecutive in memory
-			int byteSize = Vector2.SizeInBytes * array.Length; // calculate size in bytes of circle points
 
 			vertexArray = GL.GenVertexArray(); // create a vertex array object for interpreting our buffer data (circle points)
 			GL.BindVertexArray(vertexArray); // activate vertex array; from now on state is stored;
@@ -29,7 +28,10 @@ namespace Example
 
 			var circleBuffer = GL.GenBuffer();
 			GL.BindBuffer(BufferTarget.ArrayBuffer, circleBuffer); // activate buffer
-			GL.BufferData(BufferTarget.ArrayBuffer, byteSize, array, BufferUsageHint.StaticDraw);
+			var span = CollectionsMarshal.AsSpan(asteroidPoints);
+			//var array = asteroidPoints.ToArray(); //create an array (data is guarantied to be consecutive in memory
+			int byteSize = Vector2.SizeInBytes * span.Length; // calculate size in bytes of circle points
+			GL.BufferData(BufferTarget.ArrayBuffer, byteSize, ref span[0], BufferUsageHint.StaticDraw);
 
 			GL.EnableVertexAttribArray(0); // activate this vertex attribute for the active vertex array
 			GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 0, 0); // specify what our buffer contains
