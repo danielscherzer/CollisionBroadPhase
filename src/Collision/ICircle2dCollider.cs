@@ -1,9 +1,8 @@
-﻿namespace Collision
+﻿namespace Collision;
+
+public interface ICircle2dCollider
 {
-	public interface ICircle2dCollider
-	{
-		float CenterX { get; }
-		float CenterY { get; }
-		float Radius { get; }
-	}
+	float CenterX { get; }
+	float CenterY { get; }
+	float Radius { get; }
 }

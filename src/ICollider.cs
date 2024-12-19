@@ -1,9 +1,8 @@
 ﻿using Collision;
 
-namespace Example
+namespace Example;
+
+public interface ICollider : ICircle2dCollider, IBox2DCollider
 {
-	public interface ICollider : ICircle2dCollider, IBox2DCollider
-	{
-		void HandleCollision(ICollider other);
-	}
+	void HandleCollision(ICollider other);
 }

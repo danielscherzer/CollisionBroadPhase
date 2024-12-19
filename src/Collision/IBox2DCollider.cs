@@ -1,10 +1,9 @@
-﻿namespace Collision
+﻿namespace Collision;
+
+public interface IBox2DCollider
 {
-	public interface IBox2DCollider
-	{
-		float MinX { get; }
-		float MaxX { get; }
-		float MinY { get; }
-		float MaxY { get; }
-	}
+	float MinX { get; }
+	float MaxX { get; }
+	float MinY { get; }
+	float MaxY { get; }
 }

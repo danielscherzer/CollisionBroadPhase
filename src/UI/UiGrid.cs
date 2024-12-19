@@ -1,89 +1,88 @@
 ﻿using SFML.Graphics;
 using SFML.System;
 
-namespace Example.UI
+namespace Example.UI;
+
+internal class UiGrid : Transformable, Drawable, IRectangleShape
 {
-	internal class UiGrid : Transformable, Drawable, IRectangleShape
+	public UiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color, Font font)
 	{
-		public UiGrid(uint columns, uint rows, Vector2f position, Vector2f size, Color color, Font font)
+		Position = position;
+		Size = size;
+		var textBlueprint = new Text("", font) { FillColor = color };
+		cellTexts = new Text[columns, rows];
+		vertices = new VertexArray(PrimitiveType.Lines);
+		var deltaX = new Vector2f(size.X / columns, 0f);
+		var deltaY = new Vector2f(0f, size.Y / rows);
+		for (int column = 0; column < columns; ++column)
 		{
-			Position = position;
-			Size = size;
-			var textBlueprint = new Text("", font) { FillColor = color };
-			cellTexts = new Text[columns, rows];
-			vertices = new VertexArray(PrimitiveType.Lines);
-			var deltaX = new Vector2f(size.X / columns, 0f);
-			var deltaY = new Vector2f(0f, size.Y / rows);
-			for (int column = 0; column < columns; ++column)
+			for (int row = 0; row < rows; ++row)
 			{
-				for (int row = 0; row < rows; ++row)
+				var text = new Text(textBlueprint)
 				{
-					var text = new Text(textBlueprint)
-					{
-						Position = (0.5f + column) * deltaX + (0.5f + row) * deltaY
-					};
-					cellTexts[column, columns - 1 - row] = text;
-				}
-
-			}
-			// vertical lines
-			for (int column = 0; column < columns + 1; ++column)
-			{
-				var newPosX = column * deltaX;
-				vertices.Append(new Vertex(newPosX, color));
-				vertices.Append(new Vertex(newPosX + new Vector2f(0f, size.Y), color));
-			}
-			for (int row = 0; row < rows + 1; ++row)
-			{
-				var newPosY = row * deltaY;
-				vertices.Append(new Vertex(newPosY, color));
-				vertices.Append(new Vertex(newPosY + new Vector2f(size.X, 0f), color));
+					Position = ((0.5f + column) * deltaX) + ((0.5f + row) * deltaY)
+				};
+				cellTexts[column, columns - 1 - row] = text;
 			}
 
-			Columns = columns;
-			Rows = rows;
 		}
-
-		public string this[int column, int row]
+		// vertical lines
+		for (int column = 0; column < columns + 1; ++column)
 		{
-			get => cellTexts[column, row].DisplayedString;
-			set
-			{
-				var text = cellTexts[column, row];
-				text.DisplayedString = value;
-				var localBounds = text.GetLocalBounds();
-				text.Origin = new Vector2f(0.5f * (localBounds.Left + localBounds.Width), 0.5f * (localBounds.Top + localBounds.Height));
-			}
+			var newPosX = column * deltaX;
+			vertices.Append(new Vertex(newPosX, color));
+			vertices.Append(new Vertex(newPosX + new Vector2f(0f, size.Y), color));
 		}
-
-		public void Draw(RenderTarget target, RenderStates states)
+		for (int row = 0; row < rows + 1; ++row)
 		{
-			// apply the entity's transform -- combine it with the one that was passed by the caller
-			states.Transform *= Transform;
-			foreach (var cell in cellTexts)
-			{
-				target.Draw(cell, states);
-			}
-			// draw the vertex array
-			target.Draw(vertices, states);
+			var newPosY = row * deltaY;
+			vertices.Append(new Vertex(newPosY, color));
+			vertices.Append(new Vertex(newPosY + new Vector2f(size.X, 0f), color));
 		}
 
-		public uint Columns { get; }
-		public uint Rows { get; }
-
-		public Vector2f Size { get; private set; }
-
-		protected override void Destroy(bool disposing)
-		{
-			base.Destroy(disposing);
-			vertices.Dispose();
-			foreach (var text in cellTexts)
-			{
-				text.Dispose();
-			}
-		}
-
-		private readonly Text[,] cellTexts;
-		private readonly VertexArray vertices;
+		Columns = columns;
+		Rows = rows;
 	}
+
+	public string this[int column, int row]
+	{
+		get => cellTexts[column, row].DisplayedString;
+		set
+		{
+			var text = cellTexts[column, row];
+			text.DisplayedString = value;
+			var localBounds = text.GetLocalBounds();
+			text.Origin = new Vector2f(0.5f * (localBounds.Left + localBounds.Width), 0.5f * (localBounds.Top + localBounds.Height));
+		}
+	}
+
+	public void Draw(RenderTarget target, RenderStates states)
+	{
+		// apply the entity's transform -- combine it with the one that was passed by the caller
+		states.Transform *= Transform;
+		foreach (var cell in cellTexts)
+		{
+			target.Draw(cell, states);
+		}
+		// draw the vertex array
+		target.Draw(vertices, states);
+	}
+
+	public uint Columns { get; }
+	public uint Rows { get; }
+
+	public Vector2f Size { get; private set; }
+
+	protected override void Destroy(bool disposing)
+	{
+		base.Destroy(disposing);
+		vertices.Dispose();
+		foreach (var text in cellTexts)
+		{
+			text.Dispose();
+		}
+	}
+
+	private readonly Text[,] cellTexts;
+	private readonly VertexArray vertices;
 }

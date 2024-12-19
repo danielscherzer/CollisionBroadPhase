@@ -1,10 +1,9 @@
 ﻿using SFML.System;
 
-namespace Example.UI
+namespace Example.UI;
+
+internal interface IRectangleShape
 {
-	internal interface IRectangleShape
-	{
-		Vector2f Position { get; }
-		Vector2f Size { get; }
-	}
+	Vector2f Position { get; }
+	Vector2f Size { get; }
 }

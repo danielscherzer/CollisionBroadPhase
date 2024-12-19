@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 
-namespace Example
+namespace Example;
+
+public interface IColliderProvider
 {
-	public interface IColliderProvider
-	{
-		IReadOnlyList<ICollider> Collider { get; }
-	}
+	IReadOnlyList<ICollider> Collider { get; }
 }

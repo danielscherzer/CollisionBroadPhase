@@ -1,22 +1,21 @@
 ﻿using Zenseless.Patterns.Property;
 
-namespace Example
+namespace Example;
+
+internal class Parameters : NotifyPropertyChanged
 {
-	internal class Parameters : NotifyPropertyChanged
+	public bool CollisionDetection
 	{
-		public bool CollisionDetection
-		{
-			get => _collisionDetection;
-			set => Set(ref _collisionDetection, value);
-		}
-
-		public bool DebugAlgo
-		{
-			get => _debugAlgo;
-			set => Set(ref _debugAlgo, value);
-		}
-
-		private bool _collisionDetection = true;
-		private bool _debugAlgo = false;
+		get => _collisionDetection;
+		set => Set(ref _collisionDetection, value);
 	}
+
+	public bool DebugAlgo
+	{
+		get => _debugAlgo;
+		set => Set(ref _debugAlgo, value);
+	}
+
+	private bool _collisionDetection = true;
+	private bool _debugAlgo = false;
 }

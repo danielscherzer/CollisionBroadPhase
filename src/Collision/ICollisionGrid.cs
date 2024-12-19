@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using Zenseless.Spatial;
 
-namespace Collision
+namespace Collision;
+
+internal interface ICollisionGrid<TCollider>
 {
-	internal interface ICollisionGrid<TCollider>
-	{
-		IEnumerable<IReadOnlyGrid<List<TCollider>>> Grids { get; }
-	}
+	IEnumerable<IReadOnlyGrid<List<TCollider>>> Grids { get; }
 }

@@ -1,31 +1,30 @@
 ﻿using System;
 using Zenseless.Spatial;
 
-namespace Collision
+namespace Collision;
+
+internal static class GridHelper
 {
-	internal static class GridHelper
+	public static void ForEach<T>(this Grid<T> grid, Func<T> initializer)
 	{
-		public static void ForEach<T>(this Grid<T> grid, Func<T> initializer)
+		ArgumentNullException.ThrowIfNull(initializer);
+		for (int row = 0; row < grid.Rows; ++row)
 		{
-			if (initializer is null) throw new ArgumentNullException(nameof(initializer));
-			for (int row = 0; row < grid.Rows; ++row)
+			for (int column = 0; column < grid.Columns; ++column)
 			{
-				for (int column = 0; column < grid.Columns; ++column)
-				{
-					grid[column, row] = initializer();
-				}
+				grid[column, row] = initializer();
 			}
 		}
+	}
 
-		public static void ForEach<T>(this Grid<T> grid, Action<T> cellProcessor)
+	public static void ForEach<T>(this Grid<T> grid, Action<T> cellProcessor)
+	{
+		ArgumentNullException.ThrowIfNull(cellProcessor);
+		for (int row = 0; row < grid.Rows; ++row)
 		{
-			if (cellProcessor is null) throw new ArgumentNullException(nameof(cellProcessor));
-			for (int row = 0; row < grid.Rows; ++row)
+			for (int column = 0; column < grid.Columns; ++column)
 			{
-				for (int column = 0; column < grid.Columns; ++column)
-				{
-					cellProcessor(grid[column, row]);
-				}
+				cellProcessor(grid[column, row]);
 			}
 		}
 	}
